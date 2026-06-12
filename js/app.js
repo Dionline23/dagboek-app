@@ -39,6 +39,28 @@ function emptyRecord(date) {
   };
 }
 
+// ---- Streak: aantal dagen op rij ingevuld ----
+let streakText = '';
+
+function hasContent(r) {
+  return r.morningScore != null || r.eveningScore != null || r.painScore != null ||
+    r.exerciseMinutes != null || (r.journal || '').trim() !== '' ||
+    (r.gratitude || []).some((g) => g && g.trim() !== '');
+}
+
+async function computeStreak() {
+  const all = await dbGetAllDays();
+  const filled = new Set(all.filter(hasContent).map((r) => r.date));
+  let d = todayStr();
+  if (!filled.has(d)) d = addDays(d, -1); // vandaag nog niet ingevuld telt (nog) niet tegen
+  let streak = 0;
+  while (filled.has(d)) {
+    streak++;
+    d = addDays(d, -1);
+  }
+  return streak;
+}
+
 // ---- "Klaar"-afvinkknoppen per onderdeel ----
 const TODAY_DONE_KEYS = ['morning', 'evening', 'gratitude', 'journal', 'exercise'];
 
@@ -58,9 +80,10 @@ function renderDone() {
   }
   const count = TODAY_DONE_KEYS.filter((k) => done[k]).length;
   const note = document.getElementById('today-progress');
-  note.textContent = count === TODAY_DONE_KEYS.length
+  const doneText = count === TODAY_DONE_KEYS.length
     ? '🎉 Alles afgerond voor deze dag!'
     : `${count} van ${TODAY_DONE_KEYS.length} afgerond`;
+  note.textContent = streakText ? `${doneText} · ${streakText}` : doneText;
 }
 
 async function loadCurrent() {
@@ -132,7 +155,9 @@ function renderExercise() {
 }
 
 // ---- Tab: Vandaag ----
-function renderVandaag() {
+async function renderVandaag() {
+  const streak = await computeStreak();
+  streakText = streak >= 2 ? `🔥 ${streak} dagen op rij` : streak === 1 ? '🔥 1 dag' : '';
   const isToday = currentDate === todayStr();
   document.getElementById('header-date').textContent = formatDate(currentDate);
   const banner = document.getElementById('not-today-banner');
@@ -192,13 +217,28 @@ async function renderPijn() {
 }
 
 // ---- Tab: Geschiedenis ----
+function matchesSearch(rec, term) {
+  if (!term) return true;
+  const haystack = [
+    rec.journal || '',
+    (rec.gratitude || []).join(' '),
+    rec.painNote || '',
+    formatDate(rec.date),
+  ].join(' ').toLowerCase();
+  return haystack.includes(term);
+}
+
 async function renderGeschiedenis() {
   const list = document.getElementById('history-list');
-  const days = await dbGetAllDays();
+  const term = document.getElementById('history-search').value.trim().toLowerCase();
+  let days = await dbGetAllDays();
   days.sort((a, b) => b.date.localeCompare(a.date));
+  days = days.filter((r) => matchesSearch(r, term));
   list.innerHTML = '';
   if (days.length === 0) {
-    list.innerHTML = '<p class="empty-note">Nog geen dagen ingevuld. Begin bij "Vandaag"!</p>';
+    list.innerHTML = term
+      ? '<p class="empty-note">Niets gevonden voor deze zoekterm.</p>'
+      : '<p class="empty-note">Nog geen dagen ingevuld. Begin bij "Vandaag"!</p>';
     return;
   }
   for (const rec of days) {
@@ -253,10 +293,28 @@ async function openDate(date) {
 // ---- Tab: Inzichten ----
 let insightDays = 30;
 
+function weekStats(byDate, today) {
+  const vals = { morning: [], evening: [], pain: [], exercise: 0 };
+  for (let i = 0; i < 7; i++) {
+    const r = byDate.get(addDays(today, -i));
+    if (!r) continue;
+    if (r.morningScore != null) vals.morning.push(r.morningScore);
+    if (r.eveningScore != null) vals.evening.push(r.eveningScore);
+    if (r.painScore != null) vals.pain.push(r.painScore);
+    if (r.exerciseMinutes != null) vals.exercise += r.exerciseMinutes;
+  }
+  const avg = (a) => (a.length ? (a.reduce((s, v) => s + v, 0) / a.length).toFixed(1).replace('.', ',') : '–');
+  document.getElementById('stat-morning').textContent = avg(vals.morning);
+  document.getElementById('stat-evening').textContent = avg(vals.evening);
+  document.getElementById('stat-pain').textContent = avg(vals.pain);
+  document.getElementById('stat-exercise').textContent = vals.exercise > 0 ? `${vals.exercise}m` : '–';
+}
+
 async function renderInzichten() {
   const all = await dbGetAllDays();
   const byDate = new Map(all.map((r) => [r.date, r]));
   const today = todayStr();
+  weekStats(byDate, today);
   const dates = [];
   for (let i = insightDays - 1; i >= 0; i--) dates.push(addDays(today, -i));
 
@@ -347,11 +405,48 @@ async function init() {
   document.getElementById('btn-back-to-today').addEventListener('click', backToToday);
   document.getElementById('btn-pain-back-to-today').addEventListener('click', backToToday);
 
-  // geschiedenis: datumkiezer
+  // geschiedenis: datumkiezer + zoeken
   const picker = document.getElementById('history-date-picker');
   picker.max = todayStr();
   picker.addEventListener('change', () => {
     if (picker.value) openDate(picker.value);
+  });
+  document.getElementById('history-search').addEventListener('input', () => renderGeschiedenis());
+
+  // weergave: thema + accentkleur
+  const savedTheme = localStorage.getItem('dagboek-thema') || 'auto';
+  for (const b of document.querySelectorAll('#theme-segment button')) {
+    b.classList.toggle('active', b.dataset.theme === savedTheme);
+  }
+  document.getElementById('theme-segment').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const choice = btn.dataset.theme;
+    if (choice === 'auto') {
+      delete document.documentElement.dataset.theme;
+      localStorage.removeItem('dagboek-thema');
+    } else {
+      document.documentElement.dataset.theme = choice === 'licht' ? 'light' : 'dark';
+      localStorage.setItem('dagboek-thema', choice);
+    }
+    for (const b of document.querySelectorAll('#theme-segment button')) {
+      b.classList.toggle('active', b === btn);
+    }
+    renderInzichten(); // grafieken hertekenen met nieuwe kleuren
+  });
+
+  const savedAccent = localStorage.getItem('dagboek-accent') || 'blauw';
+  for (const b of document.querySelectorAll('.swatch')) {
+    b.classList.toggle('active', b.dataset.accent === savedAccent);
+  }
+  document.getElementById('accent-swatches').addEventListener('click', (e) => {
+    const btn = e.target.closest('.swatch');
+    if (!btn) return;
+    document.documentElement.dataset.accent = btn.dataset.accent;
+    localStorage.setItem('dagboek-accent', btn.dataset.accent);
+    for (const b of document.querySelectorAll('.swatch')) {
+      b.classList.toggle('active', b === btn);
+    }
   });
 
   // tabbalk

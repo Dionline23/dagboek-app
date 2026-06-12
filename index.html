@@ -8,6 +8,18 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <script>
+    // thema/accent direct toepassen, vóór het renderen (voorkomt kleurflits)
+    (function () {
+      try {
+        var t = localStorage.getItem('dagboek-thema');
+        if (t === 'licht') document.documentElement.dataset.theme = 'light';
+        if (t === 'donker') document.documentElement.dataset.theme = 'dark';
+        var a = localStorage.getItem('dagboek-accent');
+        if (a) document.documentElement.dataset.accent = a;
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -107,12 +119,24 @@
       <div class="card">
         <h2>📅 Ga naar datum</h2>
         <input type="date" id="history-date-picker">
+        <input type="search" id="history-search" placeholder="🔍 Zoeken in journal, dankbaarheid, notities...">
       </div>
       <div id="history-list"></div>
     </section>
 
     <!-- TAB: Inzichten -->
     <section id="tab-inzichten" class="tab hidden">
+      <div class="card">
+        <h2>📊 Deze week</h2>
+        <p class="hint">Gemiddelden van de afgelopen 7 dagen</p>
+        <div class="stats-grid">
+          <div class="stat"><span class="v" id="stat-morning">–</span><span class="l">☀️ Ochtend</span></div>
+          <div class="stat"><span class="v" id="stat-evening">–</span><span class="l">🌙 Avond</span></div>
+          <div class="stat"><span class="v" id="stat-pain">–</span><span class="l">🩹 Pijn</span></div>
+          <div class="stat"><span class="v" id="stat-exercise">–</span><span class="l">🏃 Sport totaal</span></div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="period-row">
           <h2>📈 Periode</h2>
@@ -140,6 +164,24 @@
       <div class="card">
         <h2>Sportminuten</h2>
         <canvas id="chart-exercise" class="chart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>🎨 Weergave</h2>
+        <p class="hint">Thema</p>
+        <div class="segment" id="theme-segment">
+          <button data-theme="auto" class="active">Auto</button>
+          <button data-theme="licht">Licht</button>
+          <button data-theme="donker">Donker</button>
+        </div>
+        <p class="hint" style="margin-top:12px">Accentkleur</p>
+        <div class="swatch-row" id="accent-swatches">
+          <button class="swatch" data-accent="blauw" style="background:#4f7cac" aria-label="Blauw"></button>
+          <button class="swatch" data-accent="groen" style="background:#3e9e74" aria-label="Groen"></button>
+          <button class="swatch" data-accent="paars" style="background:#8a6fc9" aria-label="Paars"></button>
+          <button class="swatch" data-accent="roze" style="background:#c4628c" aria-label="Roze"></button>
+          <button class="swatch" data-accent="oranje" style="background:#d98a3d" aria-label="Oranje"></button>
+        </div>
       </div>
 
       <div class="card">
