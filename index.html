@@ -24,33 +24,50 @@
         <button id="btn-back-to-today" class="btn-small">Naar vandaag</button>
       </div>
 
-      <div class="card">
-        <h2>☀️ Ochtendcijfer</h2>
+      <p class="progress-note" id="today-progress"></p>
+
+      <div class="card" data-done-card="morning">
+        <div class="card-head">
+          <h2>☀️ Ochtendcijfer</h2>
+          <button type="button" class="done-btn" data-done="morning">Klaar</button>
+        </div>
         <p class="hint">Hoe begin je de dag?</p>
         <div class="score-row" id="morning-scores" data-min="1" data-max="10"></div>
       </div>
 
-      <div class="card">
-        <h2>🌙 Avondcijfer</h2>
+      <div class="card" data-done-card="evening">
+        <div class="card-head">
+          <h2>🌙 Avondcijfer</h2>
+          <button type="button" class="done-btn" data-done="evening">Klaar</button>
+        </div>
         <p class="hint">Hoe was je dag?</p>
         <div class="score-row" id="evening-scores" data-min="1" data-max="10"></div>
       </div>
 
-      <div class="card">
-        <h2>🙏 Dankbaarheid</h2>
+      <div class="card" data-done-card="gratitude">
+        <div class="card-head">
+          <h2>🙏 Dankbaarheid</h2>
+          <button type="button" class="done-btn" data-done="gratitude">Klaar</button>
+        </div>
         <p class="hint">Waar ben je vandaag dankbaar voor?</p>
         <input type="text" class="gratitude" id="gratitude-0" placeholder="1.">
         <input type="text" class="gratitude" id="gratitude-1" placeholder="2.">
         <input type="text" class="gratitude" id="gratitude-2" placeholder="3.">
       </div>
 
-      <div class="card">
-        <h2>📓 Journal</h2>
+      <div class="card" data-done-card="journal">
+        <div class="card-head">
+          <h2>📓 Journal</h2>
+          <button type="button" class="done-btn" data-done="journal">Klaar</button>
+        </div>
         <textarea id="journal" rows="5" placeholder="Schrijf hier vrijuit over je dag..."></textarea>
       </div>
 
-      <div class="card">
-        <h2>🏃 Sport</h2>
+      <div class="card" data-done-card="exercise">
+        <div class="card-head">
+          <h2>🏃 Sport</h2>
+          <button type="button" class="done-btn" data-done="exercise">Klaar</button>
+        </div>
         <p class="hint">Hoe lang heb je vandaag gesport?</p>
         <div class="preset-row" id="exercise-presets"></div>
         <div class="minutes-input">
@@ -69,8 +86,11 @@
         <button id="btn-pain-back-to-today" class="btn-small">Naar vandaag</button>
       </div>
 
-      <div class="card">
-        <h2>🩹 Pijnscore</h2>
+      <div class="card" data-done-card="pain">
+        <div class="card-head">
+          <h2>🩹 Pijnscore</h2>
+          <button type="button" class="done-btn" data-done="pain">Klaar</button>
+        </div>
         <p class="hint">0 = geen pijn, 10 = ergst denkbare pijn</p>
         <div class="score-row" id="pain-scores" data-min="0" data-max="10"></div>
         <textarea id="pain-note" rows="2" placeholder="Notitie (optioneel): waar, wanneer, wat hielp..."></textarea>

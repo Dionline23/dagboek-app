@@ -35,7 +35,32 @@ function emptyRecord(date) {
     exerciseMinutes: null,
     painScore: null,
     painNote: '',
+    done: {},
   };
+}
+
+// ---- "Klaar"-afvinkknoppen per onderdeel ----
+const TODAY_DONE_KEYS = ['morning', 'evening', 'gratitude', 'journal', 'exercise'];
+
+function toggleDone(key) {
+  if (!currentRecord.done) currentRecord.done = {};
+  currentRecord.done[key] = !currentRecord.done[key];
+  renderDone();
+  saveNow();
+}
+
+function renderDone() {
+  const done = currentRecord.done || {};
+  for (const btn of document.querySelectorAll('.done-btn')) {
+    const isDone = !!done[btn.dataset.done];
+    btn.classList.toggle('done', isDone);
+    btn.closest('[data-done-card]').classList.toggle('card-done', isDone);
+  }
+  const count = TODAY_DONE_KEYS.filter((k) => done[k]).length;
+  const note = document.getElementById('today-progress');
+  note.textContent = count === TODAY_DONE_KEYS.length
+    ? '🎉 Alles afgerond voor deze dag!'
+    : `${count} van ${TODAY_DONE_KEYS.length} afgerond`;
 }
 
 async function loadCurrent() {
@@ -123,6 +148,7 @@ function renderVandaag() {
   }
   document.getElementById('journal').value = currentRecord.journal || '';
   renderExercise();
+  renderDone();
 }
 
 // ---- Tab: Pijn ----
@@ -140,6 +166,7 @@ async function renderPijn() {
 
   updateScoreRow(document.getElementById('pain-scores'), currentRecord.painScore);
   document.getElementById('pain-note').value = currentRecord.painNote || '';
+  renderDone();
 
   // laatste 14 dagen
   const wrap = document.getElementById('pain-recent');
@@ -280,6 +307,11 @@ async function init() {
   buildScoreRow(document.getElementById('evening-scores'), 'eveningScore');
   buildScoreRow(document.getElementById('pain-scores'), 'painScore');
   buildExercisePresets();
+
+  // "Klaar"-knoppen
+  for (const btn of document.querySelectorAll('.done-btn')) {
+    btn.addEventListener('click', () => toggleDone(btn.dataset.done));
+  }
 
   // tekstvelden -> autosave
   for (let i = 0; i < 3; i++) {

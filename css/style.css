@@ -70,6 +70,47 @@ main {
 }
 
 .card h2 { font-size: 1rem; margin: 0 0 4px; }
+
+/* Kop met "Klaar"-knop */
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card-head h2 { margin: 0; }
+
+.done-btn {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.done-btn.done {
+  background: #4caf7d;
+  border-color: #4caf7d;
+  color: #fff;
+}
+
+.done-btn.done::before { content: '✓ '; }
+
+.card[data-done-card].card-done { border-color: #4caf7d; }
+
+.progress-note {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 2px 0 10px;
+}
 .hint { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 10px; }
 
 /* Cijfer-knoppen */
