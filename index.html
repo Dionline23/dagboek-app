@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#4f7cac">
+  <title>Dagboek</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1 id="header-title">Dagboek</h1>
+    <span id="header-date"></span>
+  </header>
+
+  <main id="main">
+    <!-- TAB: Vandaag -->
+    <section id="tab-vandaag" class="tab">
+      <div id="not-today-banner" class="banner hidden">
+        <span id="not-today-text"></span>
+        <button id="btn-back-to-today" class="btn-small">Naar vandaag</button>
+      </div>
+
+      <div class="card">
+        <h2>☀️ Ochtendcijfer</h2>
+        <p class="hint">Hoe begin je de dag?</p>
+        <div class="score-row" id="morning-scores" data-min="1" data-max="10"></div>
+      </div>
+
+      <div class="card">
+        <h2>🌙 Avondcijfer</h2>
+        <p class="hint">Hoe was je dag?</p>
+        <div class="score-row" id="evening-scores" data-min="1" data-max="10"></div>
+      </div>
+
+      <div class="card">
+        <h2>🙏 Dankbaarheid</h2>
+        <p class="hint">Waar ben je vandaag dankbaar voor?</p>
+        <input type="text" class="gratitude" id="gratitude-0" placeholder="1.">
+        <input type="text" class="gratitude" id="gratitude-1" placeholder="2.">
+        <input type="text" class="gratitude" id="gratitude-2" placeholder="3.">
+      </div>
+
+      <div class="card">
+        <h2>📓 Journal</h2>
+        <textarea id="journal" rows="5" placeholder="Schrijf hier vrijuit over je dag..."></textarea>
+      </div>
+
+      <div class="card">
+        <h2>🏃 Sport</h2>
+        <p class="hint">Hoe lang heb je vandaag gesport?</p>
+        <div class="preset-row" id="exercise-presets"></div>
+        <div class="minutes-input">
+          <input type="number" id="exercise-minutes" min="0" max="1440" inputmode="numeric" placeholder="0">
+          <span>minuten</span>
+        </div>
+      </div>
+
+      <p class="save-note" id="save-note">Wijzigingen worden automatisch opgeslagen</p>
+    </section>
+
+    <!-- TAB: Pijn -->
+    <section id="tab-pijn" class="tab hidden">
+      <div id="pain-not-today-banner" class="banner hidden">
+        <span id="pain-not-today-text"></span>
+        <button id="btn-pain-back-to-today" class="btn-small">Naar vandaag</button>
+      </div>
+
+      <div class="card">
+        <h2>🩹 Pijnscore</h2>
+        <p class="hint">0 = geen pijn, 10 = ergst denkbare pijn</p>
+        <div class="score-row" id="pain-scores" data-min="0" data-max="10"></div>
+        <textarea id="pain-note" rows="2" placeholder="Notitie (optioneel): waar, wanneer, wat hielp..."></textarea>
+      </div>
+
+      <div class="card">
+        <h2>Afgelopen 14 dagen</h2>
+        <div id="pain-recent"></div>
+      </div>
+    </section>
+
+    <!-- TAB: Geschiedenis -->
+    <section id="tab-geschiedenis" class="tab hidden">
+      <div class="card">
+        <h2>📅 Ga naar datum</h2>
+        <input type="date" id="history-date-picker">
+      </div>
+      <div id="history-list"></div>
+    </section>
+
+    <!-- TAB: Inzichten -->
+    <section id="tab-inzichten" class="tab hidden">
+      <div class="card">
+        <div class="period-row">
+          <h2>📈 Periode</h2>
+          <div class="segment" id="period-segment">
+            <button data-days="30" class="active">30 dagen</button>
+            <button data-days="90">90 dagen</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Dagcijfers</h2>
+        <div class="legend">
+          <span><i style="background:#f0a04b"></i> Ochtend</span>
+          <span><i style="background:#4f7cac"></i> Avond</span>
+        </div>
+        <canvas id="chart-scores" class="chart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Pijnscore</h2>
+        <canvas id="chart-pain" class="chart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Sportminuten</h2>
+        <canvas id="chart-exercise" class="chart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>💾 Back-up</h2>
+        <p class="hint">Je data staat alleen op dit apparaat. Maak regelmatig een back-up.</p>
+        <div class="backup-row">
+          <button id="btn-export" class="btn">Exporteren</button>
+          <button id="btn-import" class="btn btn-secondary">Importeren</button>
+          <input type="file" id="import-file" accept=".json,application/json" hidden>
+        </div>
+        <p class="hint" id="backup-status"></p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tabbtn active" data-tab="vandaag"><span class="ico">📝</span>Vandaag</button>
+    <button class="tabbtn" data-tab="pijn"><span class="ico">🩹</span>Pijn</button>
+    <button class="tabbtn" data-tab="geschiedenis"><span class="ico">📅</span>Historie</button>
+    <button class="tabbtn" data-tab="inzichten"><span class="ico">📈</span>Inzichten</button>
+  </nav>
+
+  <script src="js/db.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/backup.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
