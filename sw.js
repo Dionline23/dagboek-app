@@ -1,4 +1,4 @@
-const CACHE = 'dagboek-v3';
+const CACHE = 'dagboek-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -14,7 +14,7 @@ const ASSETS = [
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
-  self.skipWaiting();
+  // geen skipWaiting hier: nieuwe versie wacht, zodat de app een update-melding kan tonen
 });
 
 self.addEventListener('activate', (e) => {
@@ -30,5 +30,21 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
     caches.match(e.request).then((hit) => hit || fetch(e.request))
+  );
+});
+
+// "Vernieuwen"-knop in de app stuurt dit bericht zodat de nieuwe versie direct actief wordt
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+// Tik op een herinnering opent/focust de app
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((cl) => {
+      for (const c of cl) { if ('focus' in c) return c.focus(); }
+      if (self.clients.openWindow) return self.clients.openWindow('./');
+    })
   );
 });

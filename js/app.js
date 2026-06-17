@@ -28,23 +28,70 @@ let saveTimer = null;
 function emptyRecord(date) {
   return {
     date,
+    mood: null,
     morningScore: null,
     eveningScore: null,
     gratitude: ['', '', ''],
     journal: '',
     exerciseMinutes: null,
-    painScore: null,
+    painMorning: null,
+    painAfternoon: null,
+    painEvening: null,
+    painLocations: [],
     painNote: '',
     done: {},
   };
+}
+
+// representatieve pijnscore van een dag (gemiddelde van ingevulde dagdelen, anders oude losse score)
+function painRepresentative(r) {
+  if (!r) return null;
+  const parts = [r.painMorning, r.painAfternoon, r.painEvening].filter((v) => v != null);
+  if (parts.length) return parts.reduce((s, v) => s + v, 0) / parts.length;
+  return r.painScore != null ? r.painScore : null;
+}
+
+// ---- Stemming ----
+const MOODS = [
+  { v: 1, e: '😞', l: 'Slecht' },
+  { v: 2, e: '😕', l: 'Matig' },
+  { v: 3, e: '😐', l: 'Neutraal' },
+  { v: 4, e: '🙂', l: 'Goed' },
+  { v: 5, e: '😄', l: 'Top' },
+];
+
+function buildMoodRow() {
+  const row = document.getElementById('mood-row');
+  row.innerHTML = '';
+  for (const m of MOODS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'mood-btn';
+    btn.textContent = m.e;
+    btn.title = m.l;
+    btn.dataset.value = m.v;
+    btn.addEventListener('click', () => {
+      currentRecord.mood = currentRecord.mood === m.v ? null : m.v;
+      renderMood();
+      saveNow();
+    });
+    row.appendChild(btn);
+  }
+}
+
+function renderMood() {
+  for (const btn of document.getElementById('mood-row').children) {
+    btn.classList.toggle('selected', Number(btn.dataset.value) === currentRecord.mood);
+  }
 }
 
 // ---- Streak: aantal dagen op rij ingevuld ----
 let streakText = '';
 
 function hasContent(r) {
-  return r.morningScore != null || r.eveningScore != null || r.painScore != null ||
-    r.exerciseMinutes != null || (r.journal || '').trim() !== '' ||
+  return r.mood != null || r.morningScore != null || r.eveningScore != null ||
+    painRepresentative(r) != null || r.exerciseMinutes != null ||
+    (r.painLocations || []).length > 0 || (r.journal || '').trim() !== '' ||
     (r.gratitude || []).some((g) => g && g.trim() !== '');
 }
 
@@ -52,13 +99,34 @@ async function computeStreak() {
   const all = await dbGetAllDays();
   const filled = new Set(all.filter(hasContent).map((r) => r.date));
   let d = todayStr();
-  if (!filled.has(d)) d = addDays(d, -1); // vandaag nog niet ingevuld telt (nog) niet tegen
+  if (!filled.has(d)) d = addDays(d, -1);
   let streak = 0;
   while (filled.has(d)) {
     streak++;
     d = addDays(d, -1);
   }
   return streak;
+}
+
+// ---- Inhaalprompt voor gemiste dagen ----
+async function renderMissedPrompt() {
+  const banner = document.getElementById('missed-banner');
+  banner.classList.add('hidden');
+  if (currentDate !== todayStr()) return;
+  const all = await dbGetAllDays();
+  const filled = new Set(all.filter(hasContent).map((r) => r.date));
+  if (filled.size === 0) return;
+  const first = [...filled].sort()[0];
+  const missed = [];
+  for (let i = 1; i <= 7; i++) {
+    const d = addDays(todayStr(), -i);
+    if (!filled.has(d) && d > first) missed.push(d);
+  }
+  if (missed.length === 0) return;
+  banner.querySelector('span').textContent =
+    missed.length === 1 ? 'Je miste 1 dag deze week' : `Je miste ${missed.length} dagen deze week`;
+  banner.dataset.target = missed[0];
+  banner.classList.remove('hidden');
 }
 
 // ---- "Klaar"-afvinkknoppen per onderdeel ----
@@ -88,6 +156,9 @@ function renderDone() {
 
 async function loadCurrent() {
   currentRecord = (await dbGetDay(currentDate)) || emptyRecord(currentDate);
+  if (!currentRecord.painLocations) currentRecord.painLocations = [];
+  if (!currentRecord.gratitude) currentRecord.gratitude = ['', '', ''];
+  if (!currentRecord.done) currentRecord.done = {};
 }
 
 function scheduleSave() {
@@ -98,6 +169,21 @@ function scheduleSave() {
 async function saveNow() {
   clearTimeout(saveTimer);
   await dbPutDay(currentRecord);
+  showToast('Opgeslagen ✓');
+}
+
+// ---- "Opgeslagen"-toast ----
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.classList.add('hidden'), 250);
+  }, 1100);
 }
 
 // ---- Score-knoppenrijen ----
@@ -111,7 +197,6 @@ function buildScoreRow(container, field) {
     btn.textContent = v;
     btn.dataset.value = v;
     btn.addEventListener('click', () => {
-      // nogmaals tikken op de geselecteerde waarde wist de score
       currentRecord[field] = currentRecord[field] === v ? null : v;
       updateScoreRow(container, currentRecord[field]);
       saveNow();
@@ -166,6 +251,7 @@ async function renderVandaag() {
     document.getElementById('not-today-text').textContent = `Je bewerkt ${formatDate(currentDate, false)}`;
   }
 
+  renderMood();
   updateScoreRow(document.getElementById('morning-scores'), currentRecord.morningScore);
   updateScoreRow(document.getElementById('evening-scores'), currentRecord.eveningScore);
   for (let i = 0; i < 3; i++) {
@@ -174,9 +260,59 @@ async function renderVandaag() {
   document.getElementById('journal').value = currentRecord.journal || '';
   renderExercise();
   renderDone();
+  renderMissedPrompt();
 }
 
 // ---- Tab: Pijn ----
+const REGION_LABELS = {
+  hoofd: 'Hoofd', nek: 'Nek', 'schouder-l': 'Schouder links', 'schouder-r': 'Schouder rechts',
+  borst: 'Borst', buik: 'Buik', 'arm-l': 'Arm links', 'arm-r': 'Arm rechts',
+  'hand-l': 'Hand links', 'hand-r': 'Hand rechts', heup: 'Heupen/bekken',
+  'been-l': 'Been links', 'been-r': 'Been rechts', 'knie-l': 'Knie links', 'knie-r': 'Knie rechts',
+  'voet-l': 'Voet links', 'voet-r': 'Voet rechts', onderrug: 'Onderrug', bovenrug: 'Bovenrug',
+};
+const EXTRA_REGIONS = ['onderrug', 'bovenrug'];
+
+function buildBodyMap() {
+  for (const shape of document.querySelectorAll('#bodymap .region')) {
+    shape.addEventListener('click', () => toggleRegion(shape.dataset.region));
+  }
+  const chips = document.getElementById('region-chips-extra');
+  chips.innerHTML = '';
+  for (const id of EXTRA_REGIONS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'region-chip';
+    btn.dataset.region = id;
+    btn.textContent = REGION_LABELS[id];
+    btn.addEventListener('click', () => toggleRegion(id));
+    chips.appendChild(btn);
+  }
+}
+
+function toggleRegion(id) {
+  const locs = currentRecord.painLocations;
+  const i = locs.indexOf(id);
+  if (i >= 0) locs.splice(i, 1);
+  else locs.push(id);
+  renderBodyMap();
+  saveNow();
+}
+
+function renderBodyMap() {
+  const locs = currentRecord.painLocations || [];
+  for (const shape of document.querySelectorAll('#bodymap .region')) {
+    shape.classList.toggle('sel', locs.includes(shape.dataset.region));
+  }
+  for (const chip of document.querySelectorAll('#region-chips-extra .region-chip')) {
+    chip.classList.toggle('sel', locs.includes(chip.dataset.region));
+  }
+  const text = document.getElementById('pain-locations-text');
+  text.textContent = locs.length
+    ? 'Geselecteerd: ' + locs.map((id) => REGION_LABELS[id] || id).join(', ')
+    : 'Nog geen plekken geselecteerd.';
+}
+
 function painColorWidth(score) {
   return `${(score / 10) * 100}%`;
 }
@@ -189,11 +325,13 @@ async function renderPijn() {
     document.getElementById('pain-not-today-text').textContent = `Je bewerkt ${formatDate(currentDate, false)}`;
   }
 
-  updateScoreRow(document.getElementById('pain-scores'), currentRecord.painScore);
+  updateScoreRow(document.getElementById('pain-morning'), currentRecord.painMorning);
+  updateScoreRow(document.getElementById('pain-afternoon'), currentRecord.painAfternoon);
+  updateScoreRow(document.getElementById('pain-evening'), currentRecord.painEvening);
   document.getElementById('pain-note').value = currentRecord.painNote || '';
+  renderBodyMap();
   renderDone();
 
-  // laatste 14 dagen
   const wrap = document.getElementById('pain-recent');
   wrap.innerHTML = '';
   const today = todayStr();
@@ -201,13 +339,14 @@ async function renderPijn() {
   for (let i = 0; i < 14; i++) {
     const date = addDays(today, -i);
     const rec = date === currentDate ? currentRecord : await dbGetDay(date);
-    const score = rec ? rec.painScore : null;
+    const score = painRepresentative(rec);
     if (score == null) continue;
     any = true;
+    const shown = Math.round(score * 10) / 10;
     const row = document.createElement('div');
     row.className = 'pain-day';
     const label = i === 0 ? 'vandaag' : i === 1 ? 'gisteren' : formatDate(date, false).replace(` ${date.slice(0, 4)}`, '');
-    row.innerHTML = `<span class="d"></span><span class="bar"><i style="width:${painColorWidth(score)}"></i></span><span class="v">${score}</span>`;
+    row.innerHTML = `<span class="d"></span><span class="bar"><i style="width:${painColorWidth(score)}"></i></span><span class="v">${String(shown).replace('.', ',')}</span>`;
     row.querySelector('.d').textContent = label;
     wrap.appendChild(row);
   }
@@ -228,12 +367,73 @@ function matchesSearch(rec, term) {
   return haystack.includes(term);
 }
 
+// Kalender-heatmap
+let calMonth = null; // {y, m} (m = 0-11)
+
+function scoreColor(score) {
+  // 1 (rood) -> 10 (groen)
+  const hue = ((score - 1) / 9) * 120; // 0=rood, 120=groen
+  return `hsl(${hue}, 65%, 45%)`;
+}
+
+function renderCalendar() {
+  if (!calMonth) {
+    const [y, m] = todayStr().split('-').map(Number);
+    calMonth = { y, m: m - 1 };
+  }
+  const { y, m } = calMonth;
+  document.getElementById('cal-title').textContent = `${MAANDEN[m]} ${y}`;
+
+  const wd = document.getElementById('cal-weekdays');
+  wd.innerHTML = '';
+  for (const d of ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo']) {
+    const el = document.createElement('div');
+    el.className = 'cal-wd';
+    el.textContent = d;
+    wd.appendChild(el);
+  }
+
+  const grid = document.getElementById('cal-days');
+  grid.innerHTML = '';
+  const firstDow = (new Date(y, m, 1).getDay() + 6) % 7; // maandag = 0
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  for (let i = 0; i < firstDow; i++) {
+    grid.appendChild(document.createElement('div'));
+  }
+  const today = todayStr();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const cell = document.createElement('button');
+    cell.type = 'button';
+    cell.className = 'cal-day';
+    if (date === today) cell.classList.add('cal-today');
+    if (date > today) cell.disabled = true;
+    cell.innerHTML = `<span class="n">${d}</span>`;
+    const rec = calRecords.get(date);
+    if (rec) {
+      const sc = rec.eveningScore != null ? rec.eveningScore : rec.morningScore;
+      if (sc != null) {
+        cell.style.background = scoreColor(sc);
+        cell.classList.add('has-score');
+      } else if (hasContent(rec)) {
+        cell.classList.add('has-dot');
+      }
+    }
+    cell.addEventListener('click', () => openDate(date));
+    grid.appendChild(cell);
+  }
+}
+
+let calRecords = new Map();
+
 async function renderGeschiedenis() {
+  const all = await dbGetAllDays();
+  calRecords = new Map(all.map((r) => [r.date, r]));
+  renderCalendar();
+
   const list = document.getElementById('history-list');
   const term = document.getElementById('history-search').value.trim().toLowerCase();
-  let days = await dbGetAllDays();
-  days.sort((a, b) => b.date.localeCompare(a.date));
-  days = days.filter((r) => matchesSearch(r, term));
+  let days = all.slice().sort((a, b) => b.date.localeCompare(a.date)).filter((r) => matchesSearch(r, term));
   list.innerHTML = '';
   if (days.length === 0) {
     list.innerHTML = term
@@ -242,13 +442,16 @@ async function renderGeschiedenis() {
     return;
   }
   for (const rec of days) {
+    if (!hasContent(rec)) continue;
     const item = document.createElement('div');
     item.className = 'history-item';
 
     const badges = [];
+    if (rec.mood != null) badges.push((MOODS.find((x) => x.v === rec.mood) || {}).e || '');
     if (rec.morningScore != null) badges.push(`☀️ ${rec.morningScore}`);
     if (rec.eveningScore != null) badges.push(`🌙 ${rec.eveningScore}`);
-    if (rec.painScore != null) badges.push(`🩹 ${rec.painScore}`);
+    const pr = painRepresentative(rec);
+    if (pr != null) badges.push(`🩹 ${String(Math.round(pr * 10) / 10).replace('.', ',')}`);
     if (rec.exerciseMinutes != null && rec.exerciseMinutes > 0) badges.push(`🏃 ${rec.exerciseMinutes}m`);
 
     const summaryParts = [];
@@ -270,6 +473,7 @@ async function renderGeschiedenis() {
     const right = document.createElement('div');
     right.className = 'badges';
     for (const b of badges) {
+      if (!b) continue;
       const el = document.createElement('span');
       el.className = 'badge';
       el.textContent = b;
@@ -293,6 +497,10 @@ async function openDate(date) {
 // ---- Tab: Inzichten ----
 let insightDays = 30;
 
+function getGoal() {
+  return parseInt(localStorage.getItem('dagboek-goal-exercise') || '0', 10) || 0;
+}
+
 function weekStats(byDate, today) {
   const vals = { morning: [], evening: [], pain: [], exercise: 0 };
   for (let i = 0; i < 7; i++) {
@@ -300,7 +508,8 @@ function weekStats(byDate, today) {
     if (!r) continue;
     if (r.morningScore != null) vals.morning.push(r.morningScore);
     if (r.eveningScore != null) vals.evening.push(r.eveningScore);
-    if (r.painScore != null) vals.pain.push(r.painScore);
+    const pr = painRepresentative(r);
+    if (pr != null) vals.pain.push(pr);
     if (r.exerciseMinutes != null) vals.exercise += r.exerciseMinutes;
   }
   const avg = (a) => (a.length ? (a.reduce((s, v) => s + v, 0) / a.length).toFixed(1).replace('.', ',') : '–');
@@ -308,6 +517,19 @@ function weekStats(byDate, today) {
   document.getElementById('stat-evening').textContent = avg(vals.evening);
   document.getElementById('stat-pain').textContent = avg(vals.pain);
   document.getElementById('stat-exercise').textContent = vals.exercise > 0 ? `${vals.exercise}m` : '–';
+
+  // sportdoel-voortgang
+  const goal = getGoal();
+  const wrap = document.getElementById('goal-wrap');
+  if (goal > 0) {
+    const pct = Math.min(100, Math.round((vals.exercise / goal) * 100));
+    document.getElementById('goal-label').textContent = `${vals.exercise} / ${goal} min (${pct}%)`;
+    document.getElementById('goal-fill').style.width = `${pct}%`;
+    document.getElementById('goal-fill').classList.toggle('reached', vals.exercise >= goal);
+    wrap.classList.remove('hidden');
+  } else {
+    wrap.classList.add('hidden');
+  }
 }
 
 async function renderInzichten() {
@@ -322,6 +544,10 @@ async function renderInzichten() {
     dates
       .map((d) => ({ date: d, value: byDate.has(d) ? byDate.get(d)[field] : null }))
       .filter((p) => p.value != null);
+  const pickPain = () =>
+    dates
+      .map((d) => ({ date: d, value: byDate.has(d) ? painRepresentative(byDate.get(d)) : null }))
+      .filter((p) => p.value != null);
 
   drawLineChart(document.getElementById('chart-scores'), [
     { label: 'Ochtend', color: '#f0a04b', points: pick('morningScore') },
@@ -329,7 +555,7 @@ async function renderInzichten() {
   ], { dates, yMin: 0, yMax: 10 });
 
   drawLineChart(document.getElementById('chart-pain'), [
-    { label: 'Pijn', color: '#d9534f', points: pick('painScore') },
+    { label: 'Pijn', color: '#d9534f', points: pickPain() },
   ], { dates, yMin: 0, yMax: 10 });
 
   drawLineChart(document.getElementById('chart-exercise'), [
@@ -338,7 +564,7 @@ async function renderInzichten() {
 }
 
 // ---- Tabnavigatie ----
-const TAB_TITLES = { vandaag: 'Dagboek', pijn: 'Pijn', geschiedenis: 'Geschiedenis', inzichten: 'Inzichten' };
+const TAB_TITLES = { vandaag: 'Dagboek', pijn: 'Pijn', geschiedenis: 'Geschiedenis', inzichten: 'Inzichten', meer: 'Instellingen' };
 let activeTab = 'vandaag';
 
 function switchTab(name) {
@@ -359,19 +585,228 @@ function switchTab(name) {
   if (name === 'inzichten') renderInzichten();
 }
 
+// ---- Herinneringen (meldingen) ----
+function getReminders() {
+  try {
+    return JSON.parse(localStorage.getItem('dagboek-reminders')) || { enabled: false, morning: '08:00', evening: '21:00' };
+  } catch {
+    return { enabled: false, morning: '08:00', evening: '21:00' };
+  }
+}
+
+function saveReminders(r) {
+  localStorage.setItem('dagboek-reminders', JSON.stringify(r));
+}
+
+let reminderTimers = [];
+function scheduleReminders() {
+  reminderTimers.forEach(clearTimeout);
+  reminderTimers = [];
+  const r = getReminders();
+  if (!r.enabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const now = new Date();
+  for (const t of [r.morning, r.evening]) {
+    if (!t) continue;
+    const [h, m] = t.split(':').map(Number);
+    const fire = new Date();
+    fire.setHours(h, m, 0, 0);
+    const delay = fire - now;
+    if (delay > 0 && delay < 24 * 3600 * 1000) {
+      reminderTimers.push(setTimeout(fireReminder, delay));
+    }
+  }
+}
+
+function fireReminder() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const body = hasContent(currentRecord) ? 'Nog iets toe te voegen aan je dag? ✍️' : 'Tijd om je dagboek in te vullen ✍️';
+  if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+    navigator.serviceWorker.ready.then((reg) => reg.showNotification('Dagboek', { body, icon: 'icons/icon-192.png', tag: 'dagboek-reminder' }));
+  } else {
+    new Notification('Dagboek', { body, icon: 'icons/icon-192.png' });
+  }
+}
+
+function initReminderUI() {
+  const r = getReminders();
+  const enabled = document.getElementById('reminders-enabled');
+  const morning = document.getElementById('reminder-morning');
+  const evening = document.getElementById('reminder-evening');
+  const status = document.getElementById('reminder-status');
+  enabled.checked = r.enabled;
+  morning.value = r.morning;
+  evening.value = r.evening;
+
+  function refreshStatus() {
+    const cur = getReminders();
+    if (!cur.enabled) {
+      status.textContent = 'Herinneringen staan uit.';
+    } else if (!('Notification' in window)) {
+      status.textContent = 'Dit apparaat ondersteunt geen meldingen.';
+    } else if (Notification.permission === 'denied') {
+      status.textContent = 'Meldingen zijn geblokkeerd. Sta ze toe in je browser-/app-instellingen.';
+    } else if (Notification.permission === 'granted') {
+      status.textContent = `Aan om ${cur.morning} en ${cur.evening}. Werkt het best als je de app dagelijks even opent.`;
+    } else {
+      status.textContent = 'Tik op de schakelaar om meldingen toe te staan.';
+    }
+  }
+
+  enabled.addEventListener('change', async () => {
+    const cur = getReminders();
+    cur.enabled = enabled.checked;
+    if (cur.enabled && 'Notification' in window && Notification.permission === 'default') {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') cur.enabled = false;
+      enabled.checked = cur.enabled;
+    }
+    saveReminders(cur);
+    scheduleReminders();
+    refreshStatus();
+  });
+  const onTime = () => {
+    const cur = getReminders();
+    cur.morning = morning.value || '08:00';
+    cur.evening = evening.value || '21:00';
+    saveReminders(cur);
+    scheduleReminders();
+    refreshStatus();
+  };
+  morning.addEventListener('change', onTime);
+  evening.addEventListener('change', onTime);
+  refreshStatus();
+}
+
+// ---- Pincode (app-slot) ----
+async function hashPin(pin) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('dagboek:' + pin));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function refreshPinUI() {
+  const has = !!localStorage.getItem('dagboek-pin');
+  document.getElementById('pin-status').textContent = has
+    ? 'Pincode staat aan. De app vraagt erom bij openen.'
+    : 'Geen pincode ingesteld. Stel er een in om de app te vergrendelen.';
+  document.getElementById('pin-set-row').classList.toggle('hidden', has);
+  document.getElementById('btn-pin-remove').classList.toggle('hidden', !has);
+}
+
+function initPinUI() {
+  refreshPinUI();
+  document.getElementById('btn-pin-set').addEventListener('click', async () => {
+    const input = document.getElementById('pin-new');
+    const pin = input.value.trim();
+    if (!/^\d{4}$/.test(pin)) {
+      showToast('Voer 4 cijfers in');
+      return;
+    }
+    localStorage.setItem('dagboek-pin', await hashPin(pin));
+    input.value = '';
+    refreshPinUI();
+    showToast('Pincode ingesteld 🔒');
+  });
+  document.getElementById('btn-pin-remove').addEventListener('click', () => {
+    // vraag huidige pin via het lock-scherm in "verwijder"-modus
+    openLockScreen(true);
+  });
+}
+
+let lockRemoveMode = false;
+let lockEntry = '';
+
+function openLockScreen(removeMode = false) {
+  lockRemoveMode = removeMode;
+  lockEntry = '';
+  document.getElementById('lock-error').classList.add('hidden');
+  document.querySelector('#lock-screen h2').textContent = removeMode ? 'Voer je pincode in om te verwijderen' : 'Voer je pincode in';
+  updateLockDots();
+  document.getElementById('lock-screen').classList.remove('hidden');
+  document.documentElement.classList.add('locked');
+}
+
+function closeLockScreen() {
+  document.getElementById('lock-screen').classList.add('hidden');
+  document.documentElement.classList.remove('locked');
+}
+
+function updateLockDots() {
+  const dots = document.querySelectorAll('#lock-dots i');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < lockEntry.length));
+}
+
+function buildKeypad() {
+  const pad = document.getElementById('lock-keypad');
+  pad.innerHTML = '';
+  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
+  for (const k of keys) {
+    const btn = document.createElement('button');
+    btn.className = 'key';
+    if (k === '') { btn.classList.add('key-empty'); btn.disabled = true; }
+    btn.textContent = k;
+    btn.addEventListener('click', () => onKeypad(k));
+    pad.appendChild(btn);
+  }
+}
+
+async function onKeypad(k) {
+  if (k === '⌫') {
+    lockEntry = lockEntry.slice(0, -1);
+  } else if (k && lockEntry.length < 4) {
+    lockEntry += k;
+  }
+  updateLockDots();
+  if (lockEntry.length === 4) {
+    const ok = (await hashPin(lockEntry)) === localStorage.getItem('dagboek-pin');
+    if (ok) {
+      if (lockRemoveMode) {
+        localStorage.removeItem('dagboek-pin');
+        refreshPinUI();
+        showToast('Pincode verwijderd');
+      }
+      closeLockScreen();
+    } else {
+      const err = document.getElementById('lock-error');
+      err.classList.remove('hidden');
+      lockEntry = '';
+      updateLockDots();
+    }
+  }
+}
+
+// ---- Sportdoel ----
+function initGoalUI() {
+  const input = document.getElementById('goal-input');
+  input.value = getGoal() || '';
+  input.addEventListener('input', () => {
+    const v = Math.max(0, parseInt(input.value, 10) || 0);
+    localStorage.setItem('dagboek-goal-exercise', String(v));
+  });
+}
+
+// ---- Update-melding ----
+let waitingWorker = null;
+function showUpdateBanner(worker) {
+  waitingWorker = worker;
+  document.getElementById('update-banner').classList.remove('hidden');
+}
+
 // ---- Init ----
 async function init() {
+  buildMoodRow();
   buildScoreRow(document.getElementById('morning-scores'), 'morningScore');
   buildScoreRow(document.getElementById('evening-scores'), 'eveningScore');
-  buildScoreRow(document.getElementById('pain-scores'), 'painScore');
+  buildScoreRow(document.getElementById('pain-morning'), 'painMorning');
+  buildScoreRow(document.getElementById('pain-afternoon'), 'painAfternoon');
+  buildScoreRow(document.getElementById('pain-evening'), 'painEvening');
   buildExercisePresets();
+  buildBodyMap();
+  buildKeypad();
 
-  // "Klaar"-knoppen
   for (const btn of document.querySelectorAll('.done-btn')) {
     btn.addEventListener('click', () => toggleDone(btn.dataset.done));
   }
 
-  // tekstvelden -> autosave
   for (let i = 0; i < 3; i++) {
     document.getElementById(`gratitude-${i}`).addEventListener('input', (e) => {
       currentRecord.gratitude[i] = e.target.value;
@@ -395,7 +830,6 @@ async function init() {
     scheduleSave();
   });
 
-  // banners "naar vandaag"
   const backToToday = async () => {
     await saveNow();
     currentDate = todayStr();
@@ -404,14 +838,20 @@ async function init() {
   };
   document.getElementById('btn-back-to-today').addEventListener('click', backToToday);
   document.getElementById('btn-pain-back-to-today').addEventListener('click', backToToday);
-
-  // geschiedenis: datumkiezer + zoeken
-  const picker = document.getElementById('history-date-picker');
-  picker.max = todayStr();
-  picker.addEventListener('change', () => {
-    if (picker.value) openDate(picker.value);
+  document.getElementById('btn-fill-missed').addEventListener('click', () => {
+    const target = document.getElementById('missed-banner').dataset.target;
+    if (target) openDate(target);
   });
+
   document.getElementById('history-search').addEventListener('input', () => renderGeschiedenis());
+  document.getElementById('cal-prev').addEventListener('click', () => {
+    calMonth.m--; if (calMonth.m < 0) { calMonth.m = 11; calMonth.y--; }
+    renderCalendar();
+  });
+  document.getElementById('cal-next').addEventListener('click', () => {
+    calMonth.m++; if (calMonth.m > 11) { calMonth.m = 0; calMonth.y++; }
+    renderCalendar();
+  });
 
   // weergave: thema + accentkleur
   const savedTheme = localStorage.getItem('dagboek-thema') || 'auto';
@@ -432,7 +872,6 @@ async function init() {
     for (const b of document.querySelectorAll('#theme-segment button')) {
       b.classList.toggle('active', b === btn);
     }
-    renderInzichten(); // grafieken hertekenen met nieuwe kleuren
   });
 
   const savedAccent = localStorage.getItem('dagboek-accent') || 'blauw';
@@ -449,12 +888,10 @@ async function init() {
     }
   });
 
-  // tabbalk
   for (const btn of document.querySelectorAll('.tabbtn')) {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   }
 
-  // inzichten: periode
   document.getElementById('period-segment').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
@@ -482,28 +919,60 @@ async function init() {
       const count = await importBackup(file);
       await loadCurrent();
       status.textContent = `${count} dag(en) geïmporteerd.`;
-      renderInzichten();
     } catch (err) {
       status.textContent = `Import mislukt: ${err.message}`;
     }
     e.target.value = '';
   });
 
-  // bij terugkeren naar de app: check of er een nieuwe dag begonnen is
+  // instellingen
+  initReminderUI();
+  initPinUI();
+  initGoalUI();
+
+  // update-banner knop
+  document.getElementById('btn-update').addEventListener('click', () => {
+    if (waitingWorker) waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+  });
+
+  // bij terugkeren: nieuwe dag? + herinneringen herplannen
   document.addEventListener('visibilitychange', async () => {
-    if (document.visibilityState === 'visible' && currentDate < todayStr() &&
-        document.getElementById('not-today-banner').classList.contains('hidden')) {
-      currentDate = todayStr();
-      await loadCurrent();
-      switchTab(activeTab);
+    if (document.visibilityState === 'visible') {
+      scheduleReminders();
+      if (currentDate < todayStr() && document.getElementById('not-today-banner').classList.contains('hidden')) {
+        currentDate = todayStr();
+        await loadCurrent();
+        switchTab(activeTab);
+      }
     }
   });
 
   await loadCurrent();
   switchTab('vandaag');
 
+  // pincode: vergrendel bij openen
+  if (localStorage.getItem('dagboek-pin')) openLockScreen(false);
+  else document.documentElement.classList.remove('locked');
+
+  scheduleReminders();
+
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBanner(nw);
+          }
+        });
+      });
+    });
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloaded) return;
+      reloaded = true;
+      location.reload();
+    });
   }
 }
 
