@@ -56,6 +56,72 @@ html, body {
   color: var(--text);
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-tap-highlight-color: transparent;
+  accent-color: var(--accent);
+  overscroll-behavior-y: none;
+}
+
+/* Zachte overgang bij wisselen van thema/accentkleur */
+body, .card, .app-header, .tabbar, .score-row button, .mood-btn,
+.preset-row button, .done-btn, .segment button, .btn, input, textarea {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease;
+}
+
+/* Uniforme, toegankelijke toetsenbordfocus op alle bedienbare elementen */
+button:focus-visible,
+.region:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+.swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+button:focus:not(:focus-visible) { outline: none; }
+
+/* Tactiele feedback: kort indrukken voelt 'klikbaar' */
+.score-row button:active,
+.mood-btn:active,
+.preset-row button:active,
+.done-btn:active,
+.segment button:active,
+.region-chip:active,
+.btn:active,
+.keypad .key:active:not(.key-empty),
+.cal-day:active:not(:disabled),
+.swatch:active {
+  transform: scale(0.94);
+}
+.tabbtn:active .ico { transform: scale(0.88); }
+.btn, .score-row button, .mood-btn, .preset-row button, .done-btn,
+.region-chip, .keypad .key, .cal-day, .swatch, .tabbtn .ico {
+  transition: transform 0.08s ease, background-color 0.25s ease,
+    border-color 0.25s ease, color 0.2s ease;
+}
+
+/* Geselecteerde keuze geeft een subtiele 'pop' */
+@keyframes pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.score-row button.selected,
+.mood-btn.selected,
+.preset-row button.selected { animation: pop 0.18s ease; }
+
+/* Tab-inhoud verschijnt met een zachte fade/slide bij wisselen */
+@keyframes tabIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tab:not(.hidden) { animation: tabIn 0.22s ease both; }
+
+/* Respecteer systeemvoorkeur 'minder beweging' */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+  .score-row button:active, .mood-btn:active, .preset-row button:active,
+  .done-btn:active, .btn:active, .swatch:active { transform: none; }
 }
 
 .app-header {
@@ -68,7 +134,11 @@ html, body {
   position: sticky;
   top: 0;
   z-index: 10;
+  transition: box-shadow 0.2s ease;
 }
+
+/* Subtiele schaduw zodra je scrollt: maakt duidelijk dat de header zweeft */
+.app-header.scrolled { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08); }
 
 .app-header h1 { font-size: 1.15rem; margin: 0; }
 #header-date { font-size: 0.85rem; color: var(--text-muted); }
@@ -161,16 +231,19 @@ main {
 }
 
 /* Invulvelden */
-input[type="text"], input[type="number"], input[type="date"], textarea {
+input[type="text"], input[type="number"], input[type="date"],
+input[type="search"], textarea {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--bg);
   color: var(--text);
   font: inherit;
+  font-size: 16px; /* voorkomt ongewenste inzoom op iOS bij focus */
   padding: 10px 12px;
   margin-bottom: 8px;
 }
+::placeholder { color: var(--text-muted); opacity: 0.85; }
 
 textarea { resize: vertical; margin-bottom: 0; }
 input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
@@ -378,6 +451,7 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 
 }
 
 .tabbtn {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -394,6 +468,20 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 
 
 .tabbtn .ico { font-size: 1.25rem; }
 .tabbtn.active { color: var(--accent); }
+
+/* Indicatorstreepje boven de actieve tab */
+.tabbtn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 26px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform 0.18s ease;
+}
+.tabbtn.active::before { transform: scaleX(1); }
 
 /* Stemming */
 .mood-row { display: flex; gap: 6px; }

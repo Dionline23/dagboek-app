@@ -163,13 +163,13 @@ async function loadCurrent() {
 
 function scheduleSave() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveNow, 400);
+  saveTimer = setTimeout(() => saveNow(true), 400); // stil opslaan tijdens typen
 }
 
-async function saveNow() {
+async function saveNow(silent = false) {
   clearTimeout(saveTimer);
   await dbPutDay(currentRecord);
-  showToast('Opgeslagen ✓');
+  if (!silent) showToast('Opgeslagen ✓');
 }
 
 // ---- "Opgeslagen"-toast ----
@@ -488,7 +488,7 @@ async function renderGeschiedenis() {
 }
 
 async function openDate(date) {
-  await saveNow();
+  await saveNow(true);
   currentDate = date;
   await loadCurrent();
   switchTab('vandaag');
@@ -831,7 +831,7 @@ async function init() {
   });
 
   const backToToday = async () => {
-    await saveNow();
+    await saveNow(true);
     currentDate = todayStr();
     await loadCurrent();
     switchTab(activeTab);
@@ -892,6 +892,12 @@ async function init() {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   }
 
+  // header krijgt schaduw zodra de pagina gescrolld is
+  const headerEl = document.querySelector('.app-header');
+  const onScroll = () => headerEl.classList.toggle('scrolled', window.scrollY > 4);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
   document.getElementById('period-segment').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
@@ -904,7 +910,7 @@ async function init() {
 
   // back-up
   document.getElementById('btn-export').addEventListener('click', async () => {
-    await saveNow();
+    await saveNow(true);
     await exportBackup();
     document.getElementById('backup-status').textContent = 'Back-up gedownload.';
   });
