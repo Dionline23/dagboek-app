@@ -41,13 +41,13 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [ ] U8 — Onboarding/welkomstkaart eerste keer
 - [ ] U9 — Mooiere lege-staten
 - [ ] U10 — Zwevende snelknop (FAB)
-- [ ] U11 — Mooiere grafieken (gradient, waardelabels)
+- [x] U11 — Mooiere grafieken (gradient, waardelabels)
 - [ ] U12 — Lettergrootte-instelling
 - [ ] U13 — AMOLED zwart-thema
 - [ ] U14 — Sectiekoppen/kaartstijl
 - [ ] U15 — Kaart-entree-animatie (stagger)
 - [ ] U16 — Inklapbare instellingen
-- [ ] U17 — Kleurcodering scoreknoppen
+- [x] U17 — Kleurcodering scoreknoppen
 - [ ] U18 — Snel-navigatie chips op Vandaag
 - [ ] U19 — Geselecteerde-waarde duidelijker
 - [ ] U20 — Responsive 2-koloms op breed scherm

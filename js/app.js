@@ -299,9 +299,23 @@ function buildScoreRow(container, field) {
   }
 }
 
+// kleur op basis van waarde: 'good' = hoog groen, 'bad' = hoog rood
+function scaleColor(v, min, max, polarity) {
+  const t = max === min ? 0.5 : (v - min) / (max - min);
+  const hue = polarity === 'bad' ? (1 - t) * 120 : t * 120;
+  return `hsl(${hue}, 60%, 45%)`;
+}
+
 function updateScoreRow(container, value) {
+  const min = Number(container.dataset.min);
+  const max = Number(container.dataset.max);
+  const polarity = container.dataset.polarity || 'good';
   for (const btn of container.children) {
-    btn.classList.toggle('selected', Number(btn.dataset.value) === value);
+    const v = Number(btn.dataset.value);
+    const sel = v === value;
+    btn.classList.toggle('selected', sel);
+    btn.style.background = sel ? scaleColor(v, min, max, polarity) : '';
+    btn.style.borderColor = sel ? scaleColor(v, min, max, polarity) : '';
   }
 }
 
@@ -355,8 +369,13 @@ function buildMiniScale(container) {
 
 function renderMiniScale(container) {
   const field = container.dataset.field;
+  const max = Number(container.dataset.max);
   for (const btn of container.children) {
-    btn.classList.toggle('selected', Number(btn.dataset.value) === currentRecord[field]);
+    const v = Number(btn.dataset.value);
+    const sel = v === currentRecord[field];
+    btn.classList.toggle('selected', sel);
+    btn.style.background = sel ? scaleColor(v, 1, max, 'good') : '';
+    btn.style.borderColor = sel ? scaleColor(v, 1, max, 'good') : '';
   }
 }
 

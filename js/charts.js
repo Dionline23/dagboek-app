@@ -63,13 +63,29 @@ function drawLineChart(canvas, series, opts) {
 
   // lijnen + punten per serie
   const idxByDate = new Map(dates.map((d, i) => [d, i]));
+  const fillArea = series.length === 1; // vlak onder de lijn alleen bij één serie
   for (const s of series) {
-    const pts = s.points
-      .filter((p) => p.value != null && idxByDate.has(p.date))
-      .map((p) => ({ x: xFor(idxByDate.get(p.date)), y: yFor(p.value) }));
+    const raw = s.points.filter((p) => p.value != null && idxByDate.has(p.date));
+    const pts = raw.map((p) => ({ x: xFor(idxByDate.get(p.date)), y: yFor(p.value), value: p.value }));
+
+    // zacht kleurverloop onder de lijn
+    if (fillArea && pts.length > 1) {
+      const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+      grad.addColorStop(0, hexToRgba(s.color, 0.28));
+      grad.addColorStop(1, hexToRgba(s.color, 0));
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pad.top + plotH);
+      pts.forEach((p) => ctx.lineTo(p.x, p.y));
+      ctx.lineTo(pts[pts.length - 1].x, pad.top + plotH);
+      ctx.closePath();
+      ctx.fill();
+    }
+
     ctx.strokeStyle = s.color;
     ctx.fillStyle = s.color;
     ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
     if (pts.length > 1) {
       ctx.beginPath();
       pts.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
@@ -80,5 +96,29 @@ function drawLineChart(canvas, series, opts) {
       ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // waardelabel bij het laatste punt
+    if (pts.length) {
+      const last = pts[pts.length - 1];
+      ctx.beginPath();
+      ctx.arc(last.x, last.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      const txt = String(Math.round(last.value * 10) / 10).replace('.', ',');
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'right';
+      const tx = Math.min(last.x, cssWidth - pad.right);
+      const ty = Math.max(pad.top + 6, last.y - 9);
+      ctx.fillStyle = s.color;
+      ctx.fillText(txt, tx, ty);
+    }
   }
+}
+
+function hexToRgba(hex, alpha) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
