@@ -765,6 +765,9 @@ function switchTab(name) {
   document.getElementById('header-date').textContent =
     name === 'vandaag' || name === 'pijn' ? formatDate(currentDate) : '';
 
+  // begin bovenaan bij elke tabwissel
+  window.scrollTo({ top: 0, behavior: 'auto' });
+
   if (name === 'vandaag') renderVandaag();
   if (name === 'pijn') renderPijn();
   if (name === 'geschiedenis') renderGeschiedenis();
@@ -977,8 +980,20 @@ function showUpdateBanner(worker) {
   document.getElementById('update-banner').classList.remove('hidden');
 }
 
+// ---- Haptische feedback (trilling bij tikken, alleen waar ondersteund) ----
+function haptic(ms = 8) {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(ms); } catch (e) { /* genegeerd */ }
+  }
+}
+
 // ---- Init ----
 async function init() {
+  // subtiele trilling bij het tikken op bedienbare elementen
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('button:not(:disabled), .region, .swatch')) haptic();
+  }, true);
+
   buildMoodRow();
   buildScoreRow(document.getElementById('morning-scores'), 'morningScore');
   buildScoreRow(document.getElementById('evening-scores'), 'eveningScore');
