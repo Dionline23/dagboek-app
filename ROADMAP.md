@@ -31,8 +31,8 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [ ] F25 — Doelen voor water/stappen/slaap
 
 ## UI/UX-verbeteringen (25)
-- [ ] U1 — Voortgangsring (circulair) i.p.v. tekst
-- [ ] U2 — Vorige/volgende dag-pijlen op Vandaag
+- [x] U1 — Voortgangsring (circulair) i.p.v. tekst
+- [x] U2 — Vorige/volgende dag-pijlen op Vandaag
 - [ ] U3 — Swipe tussen tabbladen
 - [ ] U4 — Haptische feedback (vibratie)
 - [ ] U5 — Bevestigingsdialoog voor riskante acties

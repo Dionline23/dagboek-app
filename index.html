@@ -53,6 +53,12 @@
   <main id="main">
     <!-- TAB: Vandaag -->
     <section id="tab-vandaag" class="tab">
+      <div class="day-nav">
+        <button id="day-prev" class="day-arrow" aria-label="Vorige dag">‹</button>
+        <span id="day-nav-label">Vandaag</span>
+        <button id="day-next" class="day-arrow" aria-label="Volgende dag">›</button>
+      </div>
+
       <div id="not-today-banner" class="banner hidden">
         <span id="not-today-text"></span>
         <button id="btn-back-to-today" class="btn-small">Naar vandaag</button>
@@ -63,7 +69,17 @@
         <button id="btn-fill-missed" class="btn-small">Invullen</button>
       </div>
 
-      <p class="progress-note" id="today-progress"></p>
+      <div class="today-summary" id="today-summary">
+        <svg class="progress-ring" viewBox="0 0 48 48" aria-hidden="true">
+          <circle class="ring-bg" cx="24" cy="24" r="20"></circle>
+          <circle class="ring-fill" cx="24" cy="24" r="20" id="ring-fill"></circle>
+          <text x="24" y="24" id="ring-text">0/5</text>
+        </svg>
+        <div class="today-summary-text">
+          <span id="today-progress-label">Begin je dag</span>
+          <span id="today-streak-label"></span>
+        </div>
+      </div>
 
       <div class="card hidden" id="onthisday-card">
         <h2>📆 Op deze dag</h2>

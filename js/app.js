@@ -20,6 +20,16 @@ function formatDate(dateStr, withDay = true) {
   return withDay ? `${DAGEN[dt.getDay()]} ${base}` : base;
 }
 
+// "vandaag" / "gisteren" / "eergisteren" / volledige datum
+function relativeDayLabel(dateStr) {
+  const diff = Math.round((new Date(todayStr()) - new Date(dateStr)) / 86400000);
+  if (diff === 0) return 'Vandaag';
+  if (diff === 1) return 'Gisteren';
+  if (diff === 2) return 'Eergisteren';
+  if (diff === -1) return 'Morgen';
+  return formatDate(dateStr, false);
+}
+
 // ---- State ----
 let currentDate = todayStr();
 let currentRecord = null;
@@ -214,12 +224,21 @@ function renderDone() {
     btn.classList.toggle('done', isDone);
     btn.closest('[data-done-card]').classList.toggle('card-done', isDone);
   }
+  const total = TODAY_DONE_KEYS.length;
   const count = TODAY_DONE_KEYS.filter((k) => done[k]).length;
-  const note = document.getElementById('today-progress');
-  const doneText = count === TODAY_DONE_KEYS.length
-    ? '🎉 Alles afgerond voor deze dag!'
-    : `${count} van ${TODAY_DONE_KEYS.length} afgerond`;
-  note.textContent = streakText ? `${doneText} · ${streakText}` : doneText;
+
+  // voortgangsring vullen
+  const ringFill = document.getElementById('ring-fill');
+  const circ = 2 * Math.PI * 20;
+  ringFill.style.strokeDasharray = String(circ);
+  ringFill.style.strokeDashoffset = String(circ * (1 - count / total));
+  ringFill.classList.toggle('complete', count === total);
+  document.getElementById('ring-text').textContent = `${count}/${total}`;
+
+  document.getElementById('today-progress-label').textContent = count === total
+    ? '🎉 Alles afgerond!'
+    : count === 0 ? 'Begin je dag' : `${count} van ${total} afgerond`;
+  document.getElementById('today-streak-label').textContent = streakText;
 }
 
 async function loadCurrent() {
@@ -318,6 +337,10 @@ async function renderVandaag() {
   if (!isToday) {
     document.getElementById('not-today-text').textContent = `Je bewerkt ${formatDate(currentDate, false)}`;
   }
+
+  // dag-navigatie (vorige/volgende dag)
+  document.getElementById('day-nav-label').textContent = relativeDayLabel(currentDate);
+  document.getElementById('day-next').disabled = currentDate >= todayStr();
 
   renderMood();
   updateScoreRow(document.getElementById('morning-scores'), currentRecord.morningScore);
@@ -940,6 +963,12 @@ async function init() {
   };
   document.getElementById('btn-back-to-today').addEventListener('click', backToToday);
   document.getElementById('btn-pain-back-to-today').addEventListener('click', backToToday);
+
+  // dag-navigatie: vorige/volgende dag
+  document.getElementById('day-prev').addEventListener('click', () => openDate(addDays(currentDate, -1)));
+  document.getElementById('day-next').addEventListener('click', () => {
+    if (currentDate < todayStr()) openDate(addDays(currentDate, 1));
+  });
   document.getElementById('btn-fill-missed').addEventListener('click', () => {
     const target = document.getElementById('missed-banner').dataset.target;
     if (target) openDate(target);
