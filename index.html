@@ -151,6 +151,27 @@
         </div>
       </div>
 
+      <details class="card extras-card" id="extras-card">
+        <summary><span>➕ Meer bijhouden</span><span class="chev">▾</span></summary>
+        <div class="extras-body">
+          <div class="tracker">
+            <span class="tracker-label">😴 Slaap</span>
+            <div class="stepper" data-field="sleepHours" data-step="0.5" data-min="0" data-max="24">
+              <button type="button" class="step-minus" aria-label="Minder">−</button>
+              <span class="step-val" id="sleepHours-val">–</span>
+              <button type="button" class="step-plus" aria-label="Meer">+</button>
+              <span class="step-unit">uur</span>
+            </div>
+            <span class="tracker-sub">Kwaliteit</span>
+            <div class="mini-scale" id="sleepQuality-scale" data-field="sleepQuality" data-max="5"></div>
+          </div>
+          <div class="tracker">
+            <span class="tracker-label">🔋 Energie</span>
+            <div class="mini-scale" id="energy-scale" data-field="energy" data-max="5"></div>
+          </div>
+        </div>
+      </details>
+
       <p class="save-note" id="save-note">Wijzigingen worden automatisch opgeslagen</p>
     </section>
 

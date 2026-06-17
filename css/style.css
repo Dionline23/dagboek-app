@@ -611,6 +611,54 @@ button.tag-chip.clickable { cursor: pointer; }
 }
 .filter-bar .btn-small { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
 
+/* "Meer bijhouden" inklapbare sectie */
+.extras-card summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.extras-card summary::-webkit-details-marker { display: none; }
+.extras-card .chev { transition: transform 0.2s ease; color: var(--text-muted); }
+.extras-card[open] .chev { transform: rotate(180deg); }
+.extras-body { margin-top: 12px; display: flex; flex-direction: column; gap: 16px; }
+.tracker { display: flex; flex-direction: column; gap: 8px; }
+.tracker-label { font-size: 0.9rem; font-weight: 600; }
+.tracker-sub { font-size: 0.78rem; color: var(--text-muted); }
+
+/* Mini-schaal (1..n knoppen) */
+.mini-scale { display: flex; gap: 6px; }
+.mini-dot {
+  flex: 1;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+.mini-dot.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* Stepper (+/-) */
+.stepper { display: flex; align-items: center; gap: 10px; }
+.stepper button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.stepper .step-val { min-width: 38px; text-align: center; font-size: 1.1rem; font-weight: 800; }
+.stepper .step-unit { color: var(--text-muted); font-size: 0.9rem; }
+
 /* Info-banner (gemiste dagen) */
 .banner-info { background: var(--accent); color: #fff; }
 .banner-info .btn-small { background: rgba(255,255,255,0.9); color: #14181f; }

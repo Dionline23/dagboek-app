@@ -44,6 +44,9 @@ function emptyRecord(date) {
     gratitude: ['', '', ''],
     journal: '',
     exerciseMinutes: null,
+    sleepHours: null,
+    sleepQuality: null,
+    energy: null,
     painMorning: null,
     painAfternoon: null,
     painEvening: null,
@@ -169,6 +172,7 @@ let streakText = '';
 function hasContent(r) {
   return r.mood != null || r.morningScore != null || r.eveningScore != null ||
     painRepresentative(r) != null || r.exerciseMinutes != null ||
+    r.sleepHours != null || r.sleepQuality != null || r.energy != null ||
     (r.painLocations || []).length > 0 || (r.journal || '').trim() !== '' ||
     (r.gratitude || []).some((g) => g && g.trim() !== '');
 }
@@ -326,6 +330,63 @@ function renderExercise() {
   document.getElementById('exercise-minutes').value = mins == null ? '' : mins;
 }
 
+// ---- Generieke mini-schaal (1..max) ----
+function buildMiniScale(container) {
+  const field = container.dataset.field;
+  const max = Number(container.dataset.max);
+  container.innerHTML = '';
+  for (let v = 1; v <= max; v++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'mini-dot';
+    btn.textContent = v;
+    btn.dataset.value = v;
+    btn.addEventListener('click', () => {
+      currentRecord[field] = currentRecord[field] === v ? null : v;
+      renderMiniScale(container);
+      saveNow();
+    });
+    container.appendChild(btn);
+  }
+}
+
+function renderMiniScale(container) {
+  const field = container.dataset.field;
+  for (const btn of container.children) {
+    btn.classList.toggle('selected', Number(btn.dataset.value) === currentRecord[field]);
+  }
+}
+
+// ---- Generieke stepper (+/-) ----
+function buildStepper(el) {
+  const field = el.dataset.field;
+  const step = parseFloat(el.dataset.step);
+  const min = parseFloat(el.dataset.min);
+  const max = parseFloat(el.dataset.max);
+  const change = (dir) => {
+    let v = currentRecord[field];
+    if (v == null) v = 0;
+    v = Math.min(max, Math.max(min, Math.round((v + dir * step) * 10) / 10));
+    currentRecord[field] = v;
+    renderStepper(el);
+    saveNow();
+  };
+  el.querySelector('.step-minus').addEventListener('click', () => change(-1));
+  el.querySelector('.step-plus').addEventListener('click', () => change(1));
+}
+
+function renderStepper(el) {
+  const field = el.dataset.field;
+  const v = currentRecord[field];
+  el.querySelector('.step-val').textContent = v == null ? '–' : String(v).replace('.', ',');
+}
+
+function renderExtras() {
+  renderStepper(document.querySelector('.stepper[data-field="sleepHours"]'));
+  renderMiniScale(document.getElementById('sleepQuality-scale'));
+  renderMiniScale(document.getElementById('energy-scale'));
+}
+
 // ---- Tab: Vandaag ----
 async function renderVandaag() {
   const streak = await computeStreak();
@@ -351,6 +412,7 @@ async function renderVandaag() {
   document.getElementById('journal').value = currentRecord.journal || '';
   renderJournalTags();
   renderExercise();
+  renderExtras();
   renderDone();
   renderMissedPrompt();
   renderOnThisDay();
@@ -924,6 +986,9 @@ async function init() {
   buildScoreRow(document.getElementById('pain-afternoon'), 'painAfternoon');
   buildScoreRow(document.getElementById('pain-evening'), 'painEvening');
   buildExercisePresets();
+  buildMiniScale(document.getElementById('sleepQuality-scale'));
+  buildMiniScale(document.getElementById('energy-scale'));
+  buildStepper(document.querySelector('.stepper[data-field="sleepHours"]'));
   buildBodyMap();
   buildKeypad();
 

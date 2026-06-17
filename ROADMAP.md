@@ -6,11 +6,11 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 ## Nieuwe features (25)
 - [x] F1 — Journal #tags + filteren op tag
 - [x] F2 — "Op deze dag" terugblik (maand/jaar geleden)
-- [ ] F3 — Slaaptracker (uren + kwaliteit)
+- [x] F3 — Slaaptracker (uren + kwaliteit)
 - [ ] F4 — Waterinname-teller
 - [ ] F5 — Gewicht-tracker
 - [ ] F6 — Aanpasbare gewoontes (habits) afvinken
-- [ ] F7 — Energie-niveau
+- [x] F7 — Energie-niveau
 - [ ] F8 — Schrijfhulp: roterende reflectievragen
 - [ ] F9 — Slimme inzichten: lokale correlaties (geen AI)
 - [ ] F10 — Stappen (handmatig)
