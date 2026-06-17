@@ -663,6 +663,55 @@ button.tag-chip.clickable { cursor: pointer; }
 .weight-input { display: flex; align-items: center; gap: 8px; }
 .weight-input input { width: 100px; margin: 0; text-align: center; }
 
+/* Schrijfhulp */
+.prompt-text {
+  font-size: 1rem;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--text);
+  margin: 4px 0 12px;
+  line-height: 1.4;
+}
+
+/* Gewoontes */
+#habits-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.habit-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.habit-chip.done {
+  background: #4caf7d;
+  border-color: #4caf7d;
+  color: #fff;
+}
+.habit-chip.done::before { content: '✓ '; }
+
+/* Beheer-rijen (gewoontes verwijderen) */
+.manage-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.manage-row:last-child { border-bottom: none; }
+.manage-del {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
 /* Info-banner (gemiste dagen) */
 .banner-info { background: var(--accent); color: #fff; }
 .banner-info .btn-small { background: rgba(255,255,255,0.9); color: #14181f; }

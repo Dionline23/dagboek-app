@@ -49,6 +49,7 @@ function emptyRecord(date) {
     energy: null,
     water: null,
     weight: null,
+    habits: {},
     painMorning: null,
     painAfternoon: null,
     painEvening: null,
@@ -176,6 +177,7 @@ function hasContent(r) {
     painRepresentative(r) != null || r.exerciseMinutes != null ||
     r.sleepHours != null || r.sleepQuality != null || r.energy != null ||
     r.water != null || r.weight != null ||
+    Object.values(r.habits || {}).some(Boolean) ||
     (r.painLocations || []).length > 0 || (r.journal || '').trim() !== '' ||
     (r.gratitude || []).some((g) => g && g.trim() !== '');
 }
@@ -253,6 +255,7 @@ async function loadCurrent() {
   if (!currentRecord.painLocations) currentRecord.painLocations = [];
   if (!currentRecord.gratitude) currentRecord.gratitude = ['', '', ''];
   if (!currentRecord.done) currentRecord.done = {};
+  if (!currentRecord.habits) currentRecord.habits = {};
 }
 
 function scheduleSave() {
@@ -347,6 +350,100 @@ function renderExercise() {
   document.getElementById('exercise-minutes').value = mins == null ? '' : mins;
 }
 
+// ---- Schrijfhulp: roterende reflectievragen (lokaal, geen AI) ----
+const WRITING_PROMPTS = [
+  'Wat was vandaag het mooiste moment?',
+  'Waar ben je trots op vandaag?',
+  'Wat heeft je vandaag energie gegeven?',
+  'Wat heeft je vandaag energie gekost?',
+  'Wie heeft vandaag een verschil voor je gemaakt?',
+  'Wat zou je morgen anders willen doen?',
+  'Welke gedachte bleef vandaag terugkomen?',
+  'Wat heb je vandaag geleerd?',
+  'Waar maakte je je zorgen over — en klopte dat?',
+  'Wat gaf je vandaag rust?',
+  'Welke kleine overwinning had je vandaag?',
+  'Hoe voelde je lichaam zich vandaag?',
+  'Waar kijk je naar uit?',
+  'Wat zou je tegen jezelf van vanochtend zeggen?',
+  'Waarvoor wil je jezelf vandaag bedanken?',
+];
+let promptIndex = 0;
+
+function dayPromptIndex() {
+  const [y, m, d] = todayStr().split('-').map(Number);
+  return (y * 372 + m * 31 + d) % WRITING_PROMPTS.length;
+}
+
+function renderPrompt() {
+  document.getElementById('prompt-text').textContent = WRITING_PROMPTS[promptIndex];
+}
+
+function insertPrompt() {
+  const ta = document.getElementById('journal');
+  const q = WRITING_PROMPTS[promptIndex];
+  const cur = (currentRecord.journal || '').replace(/\s*$/, '');
+  currentRecord.journal = (cur ? cur + '\n\n' : '') + q + '\n';
+  ta.value = currentRecord.journal;
+  renderJournalTags();
+  saveNow();
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+}
+
+// ---- Gewoontes (aanpasbaar) ----
+function getHabits() {
+  try { return JSON.parse(localStorage.getItem('dagboek-habits')) || []; } catch { return []; }
+}
+function saveHabits(arr) { localStorage.setItem('dagboek-habits', JSON.stringify(arr)); }
+
+function renderHabits() {
+  const habits = getHabits();
+  const wrap = document.getElementById('habits-list');
+  wrap.innerHTML = '';
+  if (!habits.length) {
+    wrap.innerHTML = '<p class="hint" style="margin:0">Nog geen gewoontes. Voeg ze toe bij ⚙️ Meer → Gewoontes.</p>';
+    return;
+  }
+  if (!currentRecord.habits) currentRecord.habits = {};
+  for (const h of habits) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'habit-chip';
+    btn.classList.toggle('done', !!currentRecord.habits[h.id]);
+    btn.textContent = h.name;
+    btn.addEventListener('click', () => {
+      currentRecord.habits[h.id] = !currentRecord.habits[h.id];
+      btn.classList.toggle('done', !!currentRecord.habits[h.id]);
+      saveNow();
+    });
+    wrap.appendChild(btn);
+  }
+}
+
+function renderHabitsManager() {
+  const habits = getHabits();
+  const wrap = document.getElementById('habits-manage');
+  wrap.innerHTML = '';
+  for (const h of habits) {
+    const row = document.createElement('div');
+    row.className = 'manage-row';
+    const name = document.createElement('span');
+    name.textContent = h.name;
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'manage-del';
+    del.textContent = '✕';
+    del.addEventListener('click', () => {
+      saveHabits(getHabits().filter((x) => x.id !== h.id));
+      renderHabitsManager();
+    });
+    row.appendChild(name);
+    row.appendChild(del);
+    wrap.appendChild(row);
+  }
+}
+
 // ---- Generieke mini-schaal (1..max) ----
 function buildMiniScale(container) {
   const field = container.dataset.field;
@@ -436,6 +533,7 @@ async function renderVandaag() {
   renderJournalTags();
   renderExercise();
   renderExtras();
+  renderHabits();
   renderDone();
   renderMissedPrompt();
   renderOnThisDay();
@@ -1033,6 +1131,33 @@ async function init() {
   });
   buildBodyMap();
   buildKeypad();
+
+  // Schrijfhulp
+  promptIndex = dayPromptIndex();
+  renderPrompt();
+  document.getElementById('btn-prompt-next').addEventListener('click', () => {
+    promptIndex = (promptIndex + 1) % WRITING_PROMPTS.length;
+    renderPrompt();
+  });
+  document.getElementById('btn-prompt-insert').addEventListener('click', insertPrompt);
+
+  // Gewoontes-beheer
+  renderHabitsManager();
+  const addHabit = () => {
+    const input = document.getElementById('habit-new');
+    const name = input.value.trim();
+    if (!name) return;
+    const habits = getHabits();
+    habits.push({ id: 'h' + Date.now(), name });
+    saveHabits(habits);
+    input.value = '';
+    renderHabitsManager();
+    showToast('Gewoonte toegevoegd');
+  };
+  document.getElementById('btn-habit-add').addEventListener('click', addHabit);
+  document.getElementById('habit-new').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addHabit();
+  });
 
   for (const btn of document.querySelectorAll('.done-btn')) {
     btn.addEventListener('click', () => toggleDone(btn.dataset.done));

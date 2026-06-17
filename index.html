@@ -130,12 +130,18 @@
         <div class="tag-chips" id="journal-tags"></div>
       </div>
 
-      <div class="card locked-card">
+      <div class="card" id="writehelp-card">
         <div class="card-head">
           <h2>💡 Schrijfhulp</h2>
-          <span class="soon-badge">🔒 Binnenkort</span>
+          <button type="button" id="btn-prompt-next" class="btn-small">Andere vraag</button>
         </div>
-        <p class="hint">Wisselende reflectievragen om makkelijker te beginnen met schrijven.</p>
+        <p class="prompt-text" id="prompt-text"></p>
+        <button type="button" id="btn-prompt-insert" class="btn btn-secondary">Schrijf hierover ✍️</button>
+      </div>
+
+      <div class="card" id="habits-card">
+        <h2>✅ Gewoontes</h2>
+        <div id="habits-list"></div>
       </div>
 
       <div class="card" data-done-card="exercise">
@@ -350,6 +356,16 @@
           <button id="btn-pin-set" class="btn">Instellen</button>
         </div>
         <button id="btn-pin-remove" class="btn btn-secondary hidden">Pincode verwijderen</button>
+      </div>
+
+      <div class="card">
+        <h2>✅ Gewoontes</h2>
+        <p class="hint">Dagelijkse gewoontes die je wilt afvinken op Vandaag.</p>
+        <div class="pin-set-row">
+          <input type="text" id="habit-new" maxlength="40" placeholder="Bijv. Mediteren, 10.000 stappen...">
+          <button id="btn-habit-add" class="btn">Toevoegen</button>
+        </div>
+        <div id="habits-manage"></div>
       </div>
 
       <div class="card">

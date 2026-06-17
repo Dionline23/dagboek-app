@@ -9,9 +9,9 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [x] F3 — Slaaptracker (uren + kwaliteit)
 - [x] F4 — Waterinname-teller
 - [x] F5 — Gewicht-tracker
-- [ ] F6 — Aanpasbare gewoontes (habits) afvinken
+- [x] F6 — Aanpasbare gewoontes (habits) afvinken
 - [x] F7 — Energie-niveau
-- [ ] F8 — Schrijfhulp: roterende reflectievragen
+- [x] F8 — Schrijfhulp: roterende reflectievragen
 - [ ] F9 — Slimme inzichten: lokale correlaties (geen AI)
 - [ ] F10 — Stappen (handmatig)
 - [ ] F11 — Year-in-pixels jaaroverzicht
