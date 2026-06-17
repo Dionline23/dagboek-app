@@ -47,6 +47,8 @@ function emptyRecord(date) {
     sleepHours: null,
     sleepQuality: null,
     energy: null,
+    water: null,
+    weight: null,
     painMorning: null,
     painAfternoon: null,
     painEvening: null,
@@ -173,6 +175,7 @@ function hasContent(r) {
   return r.mood != null || r.morningScore != null || r.eveningScore != null ||
     painRepresentative(r) != null || r.exerciseMinutes != null ||
     r.sleepHours != null || r.sleepQuality != null || r.energy != null ||
+    r.water != null || r.weight != null ||
     (r.painLocations || []).length > 0 || (r.journal || '').trim() !== '' ||
     (r.gratitude || []).some((g) => g && g.trim() !== '');
 }
@@ -382,9 +385,10 @@ function renderStepper(el) {
 }
 
 function renderExtras() {
-  renderStepper(document.querySelector('.stepper[data-field="sleepHours"]'));
-  renderMiniScale(document.getElementById('sleepQuality-scale'));
-  renderMiniScale(document.getElementById('energy-scale'));
+  document.querySelectorAll('.extras-body .stepper').forEach(renderStepper);
+  document.querySelectorAll('.extras-body .mini-scale').forEach(renderMiniScale);
+  const w = document.getElementById('weight-input');
+  if (w) w.value = currentRecord.weight == null ? '' : currentRecord.weight;
 }
 
 // ---- Tab: Vandaag ----
@@ -1001,9 +1005,13 @@ async function init() {
   buildScoreRow(document.getElementById('pain-afternoon'), 'painAfternoon');
   buildScoreRow(document.getElementById('pain-evening'), 'painEvening');
   buildExercisePresets();
-  buildMiniScale(document.getElementById('sleepQuality-scale'));
-  buildMiniScale(document.getElementById('energy-scale'));
-  buildStepper(document.querySelector('.stepper[data-field="sleepHours"]'));
+  document.querySelectorAll('.extras-body .mini-scale').forEach(buildMiniScale);
+  document.querySelectorAll('.extras-body .stepper').forEach(buildStepper);
+  document.getElementById('weight-input').addEventListener('input', (e) => {
+    const v = e.target.value === '' ? null : Math.max(0, parseFloat(e.target.value) || 0);
+    currentRecord.weight = v;
+    scheduleSave();
+  });
   buildBodyMap();
   buildKeypad();
 

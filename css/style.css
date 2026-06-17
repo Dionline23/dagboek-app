@@ -659,6 +659,10 @@ button.tag-chip.clickable { cursor: pointer; }
 .stepper .step-val { min-width: 38px; text-align: center; font-size: 1.1rem; font-weight: 800; }
 .stepper .step-unit { color: var(--text-muted); font-size: 0.9rem; }
 
+/* Gewicht-invoer */
+.weight-input { display: flex; align-items: center; gap: 8px; }
+.weight-input input { width: 100px; margin: 0; text-align: center; }
+
 /* Info-banner (gemiste dagen) */
 .banner-info { background: var(--accent); color: #fff; }
 .banner-info .btn-small { background: rgba(255,255,255,0.9); color: #14181f; }

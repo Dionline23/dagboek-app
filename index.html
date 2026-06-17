@@ -169,6 +169,22 @@
             <span class="tracker-label">🔋 Energie</span>
             <div class="mini-scale" id="energy-scale" data-field="energy" data-max="5"></div>
           </div>
+          <div class="tracker">
+            <span class="tracker-label">💧 Water</span>
+            <div class="stepper" data-field="water" data-step="1" data-min="0" data-max="30">
+              <button type="button" class="step-minus" aria-label="Minder">−</button>
+              <span class="step-val">–</span>
+              <button type="button" class="step-plus" aria-label="Meer">+</button>
+              <span class="step-unit">glazen</span>
+            </div>
+          </div>
+          <div class="tracker">
+            <span class="tracker-label">⚖️ Gewicht</span>
+            <div class="weight-input">
+              <input type="number" id="weight-input" inputmode="decimal" step="0.1" min="0" max="500" placeholder="–">
+              <span class="step-unit">kg</span>
+            </div>
+          </div>
         </div>
       </details>
 

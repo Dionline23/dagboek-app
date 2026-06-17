@@ -7,8 +7,8 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [x] F1 — Journal #tags + filteren op tag
 - [x] F2 — "Op deze dag" terugblik (maand/jaar geleden)
 - [x] F3 — Slaaptracker (uren + kwaliteit)
-- [ ] F4 — Waterinname-teller
-- [ ] F5 — Gewicht-tracker
+- [x] F4 — Waterinname-teller
+- [x] F5 — Gewicht-tracker
 - [ ] F6 — Aanpasbare gewoontes (habits) afvinken
 - [x] F7 — Energie-niveau
 - [ ] F8 — Schrijfhulp: roterende reflectievragen
