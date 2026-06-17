@@ -85,6 +85,74 @@ function renderMood() {
   }
 }
 
+// ---- Journal #tags ----
+function extractTags(text) {
+  const out = [];
+  const re = /#([\p{L}0-9_]+)/gu;
+  let m;
+  while ((m = re.exec(text || '')) !== null) {
+    const t = m[1].toLowerCase();
+    if (!out.includes(t)) out.push(t);
+  }
+  return out;
+}
+
+function renderJournalTags() {
+  const wrap = document.getElementById('journal-tags');
+  const tags = extractTags(currentRecord.journal);
+  wrap.innerHTML = '';
+  for (const t of tags) {
+    const chip = document.createElement('span');
+    chip.className = 'tag-chip';
+    chip.textContent = '#' + t;
+    wrap.appendChild(chip);
+  }
+}
+
+// ---- "Op deze dag" terugblik ----
+function recSnippet(r) {
+  if (r.journal && r.journal.trim()) return r.journal.trim().slice(0, 80) + (r.journal.length > 80 ? '…' : '');
+  const parts = [];
+  if (r.mood != null) parts.push((MOODS.find((x) => x.v === r.mood) || {}).e || '');
+  if (r.eveningScore != null) parts.push(`avond ${r.eveningScore}`);
+  else if (r.morningScore != null) parts.push(`ochtend ${r.morningScore}`);
+  if ((r.gratitude || []).some((g) => g)) parts.push('dankbaarheid');
+  return parts.join(' · ') || 'ingevuld';
+}
+
+async function renderOnThisDay() {
+  const card = document.getElementById('onthisday-card');
+  const list = document.getElementById('onthisday-list');
+  card.classList.add('hidden');
+  if (currentDate !== todayStr()) return;
+  const [y, m, d] = todayStr().split('-').map(Number);
+  const targets = [
+    { label: '1 maand geleden', date: monthsAgo(y, m, d, 1) },
+    { label: '1 jaar geleden', date: `${y - 1}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` },
+    { label: '6 maanden geleden', date: monthsAgo(y, m, d, 6) },
+  ];
+  list.innerHTML = '';
+  let any = false;
+  for (const t of targets) {
+    const rec = await dbGetDay(t.date);
+    if (!rec || !hasContent(rec)) continue;
+    any = true;
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'onthisday-item';
+    item.innerHTML = `<span class="otd-when">${t.label}</span><span class="otd-snip"></span>`;
+    item.querySelector('.otd-snip').textContent = recSnippet(rec);
+    item.addEventListener('click', () => openDate(t.date));
+    list.appendChild(item);
+  }
+  card.classList.toggle('hidden', !any);
+}
+
+function monthsAgo(y, m, d, n) {
+  const dt = new Date(y, m - 1 - n, d);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
 // ---- Streak: aantal dagen op rij ingevuld ----
 let streakText = '';
 
@@ -258,9 +326,11 @@ async function renderVandaag() {
     document.getElementById(`gratitude-${i}`).value = currentRecord.gratitude[i] || '';
   }
   document.getElementById('journal').value = currentRecord.journal || '';
+  renderJournalTags();
   renderExercise();
   renderDone();
   renderMissedPrompt();
+  renderOnThisDay();
 }
 
 // ---- Tab: Pijn ----
@@ -425,19 +495,36 @@ function renderCalendar() {
 }
 
 let calRecords = new Map();
+let historyTagFilter = null;
+
+function setTagFilter(tag) {
+  historyTagFilter = tag;
+  renderGeschiedenis();
+}
 
 async function renderGeschiedenis() {
   const all = await dbGetAllDays();
   calRecords = new Map(all.map((r) => [r.date, r]));
   renderCalendar();
 
+  // filterbalk (actieve tag)
+  const filterBar = document.getElementById('history-filter');
+  if (historyTagFilter) {
+    document.getElementById('history-filter-label').textContent = `Filter: #${historyTagFilter}`;
+    filterBar.classList.remove('hidden');
+  } else {
+    filterBar.classList.add('hidden');
+  }
+
   const list = document.getElementById('history-list');
   const term = document.getElementById('history-search').value.trim().toLowerCase();
-  let days = all.slice().sort((a, b) => b.date.localeCompare(a.date)).filter((r) => matchesSearch(r, term));
+  let days = all.slice().sort((a, b) => b.date.localeCompare(a.date))
+    .filter((r) => matchesSearch(r, term))
+    .filter((r) => !historyTagFilter || extractTags(r.journal).includes(historyTagFilter));
   list.innerHTML = '';
-  if (days.length === 0) {
-    list.innerHTML = term
-      ? '<p class="empty-note">Niets gevonden voor deze zoekterm.</p>'
+  if (days.filter(hasContent).length === 0) {
+    list.innerHTML = (term || historyTagFilter)
+      ? '<p class="empty-note">Niets gevonden.</p>'
       : '<p class="empty-note">Nog geen dagen ingevuld. Begin bij "Vandaag"!</p>';
     return;
   }
@@ -468,6 +555,20 @@ async function renderGeschiedenis() {
       sumEl.className = 'summary';
       sumEl.textContent = summaryParts.join(' · ');
       left.appendChild(sumEl);
+    }
+    const tags = extractTags(rec.journal);
+    if (tags.length) {
+      const tagWrap = document.createElement('div');
+      tagWrap.className = 'tag-chips';
+      for (const t of tags) {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'tag-chip clickable';
+        chip.textContent = '#' + t;
+        chip.addEventListener('click', (e) => { e.stopPropagation(); setTagFilter(t); });
+        tagWrap.appendChild(chip);
+      }
+      left.appendChild(tagWrap);
     }
 
     const right = document.createElement('div');
@@ -815,6 +916,7 @@ async function init() {
   }
   document.getElementById('journal').addEventListener('input', (e) => {
     currentRecord.journal = e.target.value;
+    renderJournalTags();
     scheduleSave();
   });
   document.getElementById('pain-note').addEventListener('input', (e) => {
@@ -844,6 +946,7 @@ async function init() {
   });
 
   document.getElementById('history-search').addEventListener('input', () => renderGeschiedenis());
+  document.getElementById('history-filter-clear').addEventListener('click', () => setTagFilter(null));
   document.getElementById('cal-prev').addEventListener('click', () => {
     calMonth.m--; if (calMonth.m < 0) { calMonth.m = 11; calMonth.y--; }
     renderCalendar();

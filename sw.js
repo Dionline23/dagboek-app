@@ -1,4 +1,4 @@
-const CACHE = 'dagboek-v5';
+const CACHE = 'dagboek-v6';
 const ASSETS = [
   './',
   './index.html',

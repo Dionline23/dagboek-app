@@ -504,6 +504,50 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 
   background: color-mix(in srgb, var(--accent) 14%, var(--bg));
 }
 
+/* Journal #tags */
+.tag-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag-chip {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+button.tag-chip.clickable { cursor: pointer; }
+
+/* "Op deze dag" */
+#onthisday-list { display: flex; flex-direction: column; gap: 8px; }
+.onthisday-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.onthisday-item .otd-when { font-size: 0.72rem; font-weight: 700; color: var(--accent); }
+.onthisday-item .otd-snip { font-size: 0.84rem; color: var(--text-muted); }
+
+/* Filterbalk historie */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.filter-bar .btn-small { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+
 /* Info-banner (gemiste dagen) */
 .banner-info { background: var(--accent); color: #fff; }
 .banner-info .btn-small { background: rgba(255,255,255,0.9); color: #14181f; }

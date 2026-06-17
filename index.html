@@ -65,6 +65,11 @@
 
       <p class="progress-note" id="today-progress"></p>
 
+      <div class="card hidden" id="onthisday-card">
+        <h2>📆 Op deze dag</h2>
+        <div id="onthisday-list"></div>
+      </div>
+
       <div class="card">
         <h2>😊 Stemming</h2>
         <p class="hint">Hoe voel je je vandaag?</p>
@@ -105,7 +110,8 @@
           <h2>📓 Journal</h2>
           <button type="button" class="done-btn" data-done="journal">Klaar</button>
         </div>
-        <textarea id="journal" rows="5" placeholder="Schrijf hier vrijuit over je dag..."></textarea>
+        <textarea id="journal" rows="5" placeholder="Schrijf hier vrijuit over je dag... Tip: gebruik #tags"></textarea>
+        <div class="tag-chips" id="journal-tags"></div>
       </div>
 
       <div class="card locked-card">
@@ -204,6 +210,10 @@
 
       <div class="card">
         <input type="search" id="history-search" placeholder="🔍 Zoeken in journal, dankbaarheid, notities...">
+        <div class="filter-bar hidden" id="history-filter">
+          <span id="history-filter-label"></span>
+          <button id="history-filter-clear" class="btn-small">✕ Wis filter</button>
+        </div>
       </div>
       <div id="history-list"></div>
     </section>
