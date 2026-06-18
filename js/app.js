@@ -923,11 +923,112 @@ function weekStats(byDate, today) {
   }
 }
 
+// ---- Slimme inzichten: lokale correlaties (geen AI) ----
+function computeInsights(all) {
+  const days = all.filter(hasContent);
+  const out = [];
+  const avg = (a) => a.reduce((s, v) => s + v, 0) / a.length;
+  const fmt = (x) => Math.abs(x).toFixed(1).replace('.', ',');
+  const MIN = 3;
+
+  const exDays = days.filter((d) => d.exerciseMinutes > 0);
+  const noEx = days.filter((d) => !d.exerciseMinutes);
+
+  // sport ↔ pijn
+  const painEx = exDays.map(painRepresentative).filter((v) => v != null);
+  const painNo = noEx.map(painRepresentative).filter((v) => v != null);
+  if (painEx.length >= MIN && painNo.length >= MIN) {
+    const diff = avg(painNo) - avg(painEx);
+    if (Math.abs(diff) >= 0.3) {
+      out.push({ icon: '🏃', text: diff > 0
+        ? `Op sportdagen is je pijn gemiddeld ${fmt(diff)} lager.`
+        : `Op sportdagen is je pijn gemiddeld ${fmt(diff)} hoger.` });
+    }
+  }
+  // sport ↔ avondcijfer
+  const evEx = exDays.map((d) => d.eveningScore).filter((v) => v != null);
+  const evNo = noEx.map((d) => d.eveningScore).filter((v) => v != null);
+  if (evEx.length >= MIN && evNo.length >= MIN) {
+    const diff = avg(evEx) - avg(evNo);
+    if (Math.abs(diff) >= 0.3) {
+      out.push({ icon: '😊', text: diff > 0
+        ? `Op sportdagen is je avondcijfer gemiddeld ${fmt(diff)} hoger.`
+        : `Op sportdagen is je avondcijfer gemiddeld ${fmt(diff)} lager.` });
+    }
+  }
+  // slaap ↔ avondcijfer
+  const goodSleep = days.filter((d) => d.sleepHours != null && d.sleepHours >= 7);
+  const lessSleep = days.filter((d) => d.sleepHours != null && d.sleepHours < 7);
+  const evGood = goodSleep.map((d) => d.eveningScore).filter((v) => v != null);
+  const evLess = lessSleep.map((d) => d.eveningScore).filter((v) => v != null);
+  if (evGood.length >= MIN && evLess.length >= MIN) {
+    const diff = avg(evGood) - avg(evLess);
+    if (Math.abs(diff) >= 0.3) {
+      out.push({ icon: '😴', text: diff > 0
+        ? `Na 7+ uur slaap is je avondcijfer gemiddeld ${fmt(diff)} hoger.`
+        : `Na 7+ uur slaap is je avondcijfer gemiddeld ${fmt(diff)} lager.` });
+    }
+  }
+  // slaap ↔ pijn
+  const painGood = goodSleep.map(painRepresentative).filter((v) => v != null);
+  const painLess = lessSleep.map(painRepresentative).filter((v) => v != null);
+  if (painGood.length >= MIN && painLess.length >= MIN) {
+    const diff = avg(painLess) - avg(painGood);
+    if (Math.abs(diff) >= 0.3) {
+      out.push({ icon: '🛌', text: diff > 0
+        ? `Na een goede nachtrust is je pijn gemiddeld ${fmt(diff)} lager.`
+        : `Na een goede nachtrust is je pijn gemiddeld ${fmt(diff)} hoger.` });
+    }
+  }
+  return out;
+}
+
+function renderSmartInsights(all) {
+  const wrap = document.getElementById('smart-list');
+  const insights = computeInsights(all);
+  if (!insights.length) {
+    wrap.innerHTML = emptyState('🔍', 'Nog te weinig data', 'Vul meer dagen in (met o.a. sport en slaap) — dan verschijnen hier verbanden.');
+    return;
+  }
+  wrap.innerHTML = '';
+  for (const ins of insights) {
+    const el = document.createElement('div');
+    el.className = 'insight-row';
+    el.innerHTML = `<span class="ins-icon">${ins.icon}</span><span class="ins-text"></span>`;
+    el.querySelector('.ins-text').textContent = ins.text;
+    wrap.appendChild(el);
+  }
+}
+
+// ---- Beste & zwaarste dagen ----
+function renderBestWorst(all) {
+  const wrap = document.getElementById('bestworst');
+  const scored = all.filter((d) => d.eveningScore != null)
+    .map((d) => ({ date: d.date, score: d.eveningScore }));
+  if (scored.length < 2) {
+    wrap.innerHTML = emptyState('🏅', 'Nog te weinig avondcijfers', 'Geef je dagen een avondcijfer om dit te zien.');
+    return;
+  }
+  const best = [...scored].sort((a, b) => b.score - a.score).slice(0, 3);
+  const worst = [...scored].sort((a, b) => a.score - b.score).slice(0, 3);
+  const mkList = (items) => items.map((it) =>
+    `<button type="button" class="bw-item" data-date="${it.date}"><span>${formatDate(it.date, false)}</span><span class="bw-score">${it.score}</span></button>`
+  ).join('');
+  wrap.innerHTML =
+    `<div class="bw-col"><div class="bw-head">😄 Beste</div>${mkList(best)}</div>` +
+    `<div class="bw-col"><div class="bw-head">😔 Zwaarste</div>${mkList(worst)}</div>`;
+  for (const btn of wrap.querySelectorAll('.bw-item')) {
+    btn.addEventListener('click', () => openDate(btn.dataset.date));
+  }
+}
+
 async function renderInzichten() {
   const all = await dbGetAllDays();
   const byDate = new Map(all.map((r) => [r.date, r]));
   const today = todayStr();
   weekStats(byDate, today);
+  renderSmartInsights(all);
+  renderBestWorst(all);
   const dates = [];
   for (let i = insightDays - 1; i >= 0; i--) dates.push(addDays(today, -i));
 

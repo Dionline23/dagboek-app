@@ -842,6 +842,44 @@ button.tag-chip.clickable { cursor: pointer; }
 .goal-bar i { display: block; height: 100%; background: var(--accent); border-radius: 6px; transition: width 0.3s; }
 .goal-bar i.reached { background: #4caf7d; }
 
+/* Slimme inzichten */
+.insight-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+.insight-row:last-child { margin-bottom: 0; }
+.insight-row .ins-icon { font-size: 1.3rem; flex-shrink: 0; }
+.insight-row .ins-text { font-size: 0.88rem; line-height: 1.35; }
+
+/* Beste & zwaarste dagen */
+#bestworst { display: flex; gap: 10px; }
+.bw-col { flex: 1; }
+.bw-head { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
+.bw-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+.bw-score { font-weight: 800; }
+
 /* Coming soon / vergrendelde kaarten */
 .locked-card { opacity: 0.75; }
 .soon-badge {

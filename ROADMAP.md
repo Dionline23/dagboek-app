@@ -12,11 +12,11 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [x] F6 — Aanpasbare gewoontes (habits) afvinken
 - [x] F7 — Energie-niveau
 - [x] F8 — Schrijfhulp: roterende reflectievragen
-- [ ] F9 — Slimme inzichten: lokale correlaties (geen AI)
+- [x] F9 — Slimme inzichten: lokale correlaties (geen AI)
 - [x] F10 — Stappen (handmatig)
 - [ ] F11 — Year-in-pixels jaaroverzicht
 - [ ] F12 — Maandsamenvatting
-- [ ] F13 — Beste & zwaarste dagen
+- [x] F13 — Beste & zwaarste dagen
 - [ ] F14 — CSV-export
 - [ ] F15 — Tekst-export + delen (Web Share)
 - [ ] F16 — Wekelijkse terugblik
