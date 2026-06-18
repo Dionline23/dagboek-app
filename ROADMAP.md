@@ -13,7 +13,7 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [x] F7 — Energie-niveau
 - [x] F8 — Schrijfhulp: roterende reflectievragen
 - [ ] F9 — Slimme inzichten: lokale correlaties (geen AI)
-- [ ] F10 — Stappen (handmatig)
+- [x] F10 — Stappen (handmatig)
 - [ ] F11 — Year-in-pixels jaaroverzicht
 - [ ] F12 — Maandsamenvatting
 - [ ] F13 — Beste & zwaarste dagen
@@ -22,7 +22,7 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [ ] F16 — Wekelijkse terugblik
 - [ ] F17 — Favoriete dagen (ster) + filter
 - [ ] F18 — Zoekfilters (mood/score/tag)
-- [ ] F19 — Aanpasbaar aantal dankbaarheidsvelden
+- [x] F19 — Aanpasbaar aantal dankbaarheidsvelden
 - [ ] F20 — Streak-mijlpalen / badges
 - [ ] F21 — "Zelfde als gisteren" / dag dupliceren
 - [ ] F22 — Dagdashboard boven Vandaag

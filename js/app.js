@@ -49,6 +49,7 @@ function emptyRecord(date) {
     energy: null,
     water: null,
     weight: null,
+    steps: null,
     habits: {},
     painMorning: null,
     painAfternoon: null,
@@ -176,7 +177,7 @@ function hasContent(r) {
   return r.mood != null || r.morningScore != null || r.eveningScore != null ||
     painRepresentative(r) != null || r.exerciseMinutes != null ||
     r.sleepHours != null || r.sleepQuality != null || r.energy != null ||
-    r.water != null || r.weight != null ||
+    r.water != null || r.weight != null || r.steps != null ||
     Object.values(r.habits || {}).some(Boolean) ||
     (r.painLocations || []).length > 0 || (r.journal || '').trim() !== '' ||
     (r.gratitude || []).some((g) => g && g.trim() !== '');
@@ -391,6 +392,34 @@ function renderExercise() {
   document.getElementById('exercise-minutes').value = mins == null ? '' : mins;
 }
 
+// ---- Dankbaarheid (aanpasbaar aantal velden) ----
+function getGratitudeCount() {
+  return Math.min(5, Math.max(1, parseInt(localStorage.getItem('dagboek-gratitude-count') || '3', 10) || 3));
+}
+
+function buildGratitude() {
+  const wrap = document.getElementById('gratitude-list');
+  wrap.innerHTML = '';
+  const count = getGratitudeCount();
+  for (let i = 0; i < count; i++) {
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'gratitude';
+    inp.placeholder = `${i + 1}.`;
+    inp.addEventListener('input', (e) => {
+      if (!currentRecord.gratitude) currentRecord.gratitude = [];
+      currentRecord.gratitude[i] = e.target.value;
+      scheduleSave();
+    });
+    wrap.appendChild(inp);
+  }
+}
+
+function renderGratitude() {
+  const inputs = document.querySelectorAll('#gratitude-list .gratitude');
+  inputs.forEach((inp, i) => { inp.value = (currentRecord.gratitude && currentRecord.gratitude[i]) || ''; });
+}
+
 // ---- Schrijfhulp: roterende reflectievragen (lokaal, geen AI) ----
 const WRITING_PROMPTS = [
   'Wat was vandaag het mooiste moment?',
@@ -553,6 +582,8 @@ function renderExtras() {
   document.querySelectorAll('.extras-body .mini-scale').forEach(renderMiniScale);
   const w = document.getElementById('weight-input');
   if (w) w.value = currentRecord.weight == null ? '' : currentRecord.weight;
+  const s = document.getElementById('steps-input');
+  if (s) s.value = currentRecord.steps == null ? '' : currentRecord.steps;
 }
 
 // ---- Tab: Vandaag ----
@@ -574,9 +605,7 @@ async function renderVandaag() {
   renderMood();
   updateScoreRow(document.getElementById('morning-scores'), currentRecord.morningScore);
   updateScoreRow(document.getElementById('evening-scores'), currentRecord.eveningScore);
-  for (let i = 0; i < 3; i++) {
-    document.getElementById(`gratitude-${i}`).value = currentRecord.gratitude[i] || '';
-  }
+  renderGratitude();
   document.getElementById('journal').value = currentRecord.journal || '';
   renderJournalTags();
   renderExercise();
@@ -1177,6 +1206,25 @@ async function init() {
     currentRecord.weight = v;
     scheduleSave();
   });
+  document.getElementById('steps-input').addEventListener('input', (e) => {
+    const v = e.target.value === '' ? null : Math.max(0, parseInt(e.target.value, 10) || 0);
+    currentRecord.steps = v;
+    scheduleSave();
+  });
+
+  // Dankbaarheid: aantal velden instellen
+  const gratCountVal = document.getElementById('grat-count-val');
+  gratCountVal.textContent = getGratitudeCount();
+  const changeGratCount = (dir) => {
+    const next = Math.min(5, Math.max(1, getGratitudeCount() + dir));
+    localStorage.setItem('dagboek-gratitude-count', String(next));
+    gratCountVal.textContent = next;
+    buildGratitude();
+    renderGratitude();
+  };
+  document.getElementById('grat-minus').addEventListener('click', () => changeGratCount(-1));
+  document.getElementById('grat-plus').addEventListener('click', () => changeGratCount(1));
+
   buildBodyMap();
   buildKeypad();
 
@@ -1211,12 +1259,7 @@ async function init() {
     btn.addEventListener('click', () => toggleDone(btn.dataset.done));
   }
 
-  for (let i = 0; i < 3; i++) {
-    document.getElementById(`gratitude-${i}`).addEventListener('input', (e) => {
-      currentRecord.gratitude[i] = e.target.value;
-      scheduleSave();
-    });
-  }
+  buildGratitude();
   document.getElementById('journal').addEventListener('input', (e) => {
     currentRecord.journal = e.target.value;
     renderJournalTags();

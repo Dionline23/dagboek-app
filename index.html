@@ -134,9 +134,7 @@
           <button type="button" class="done-btn" data-done="gratitude">Klaar</button>
         </div>
         <p class="hint">Waar ben je vandaag dankbaar voor?</p>
-        <input type="text" class="gratitude" id="gratitude-0" placeholder="1.">
-        <input type="text" class="gratitude" id="gratitude-1" placeholder="2.">
-        <input type="text" class="gratitude" id="gratitude-2" placeholder="3.">
+        <div id="gratitude-list"></div>
       </div>
 
       <div class="card" data-done-card="journal">
@@ -207,6 +205,13 @@
             <div class="weight-input">
               <input type="number" id="weight-input" inputmode="decimal" step="0.1" min="0" max="500" placeholder="–">
               <span class="step-unit">kg</span>
+            </div>
+          </div>
+          <div class="tracker">
+            <span class="tracker-label">👟 Stappen</span>
+            <div class="weight-input">
+              <input type="number" id="steps-input" inputmode="numeric" step="100" min="0" max="100000" placeholder="–">
+              <span class="step-unit">stappen</span>
             </div>
           </div>
         </div>
@@ -385,6 +390,17 @@
           <button id="btn-habit-add" class="btn">Toevoegen</button>
         </div>
         <div id="habits-manage"></div>
+      </div>
+
+      <div class="card">
+        <h2>🙏 Dankbaarheid</h2>
+        <p class="hint">Aantal velden op Vandaag.</p>
+        <div class="stepper" data-field="_gratitudeCount" data-step="1" data-min="1" data-max="5">
+          <button type="button" class="step-minus" id="grat-minus" aria-label="Minder">−</button>
+          <span class="step-val" id="grat-count-val">3</span>
+          <button type="button" class="step-plus" id="grat-plus" aria-label="Meer">+</button>
+          <span class="step-unit">velden</span>
+        </div>
       </div>
 
       <div class="card">
