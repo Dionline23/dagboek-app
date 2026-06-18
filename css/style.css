@@ -424,6 +424,52 @@ input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 
 
 .empty-note { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 24px 0; }
 
+/* Vriendelijke lege-staat */
+.empty-state { text-align: center; padding: 28px 16px; }
+.empty-state .es-icon { font-size: 2.4rem; opacity: 0.8; }
+.empty-state .es-title { font-weight: 700; margin-top: 8px; }
+.empty-state .es-sub { font-size: 0.84rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+
+/* Onboarding / welkom */
+.onboarding {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+.onboarding-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  animation: tabIn 0.3s ease both;
+}
+.ob-emoji { font-size: 2.8rem; }
+.onboarding-card h2 { margin: 8px 0 6px; font-size: 1.25rem; }
+.onboarding-card > p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.45; margin: 0 0 16px; }
+.ob-list { list-style: none; padding: 0; margin: 0 0 16px; text-align: left; display: flex; flex-direction: column; gap: 10px; }
+.ob-list li { display: flex; align-items: center; gap: 12px; font-size: 0.9rem; }
+.ob-list li span { font-size: 1.3rem; width: 26px; text-align: center; flex-shrink: 0; }
+.ob-privacy {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0 0 18px;
+  line-height: 1.4;
+}
+.onboarding-card .btn { width: 100%; padding: 13px; font-size: 1rem; }
+
 /* Inzichten */
 .period-row { display: flex; align-items: center; justify-content: space-between; }
 .period-row h2 { margin: 0; }

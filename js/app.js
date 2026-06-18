@@ -284,6 +284,13 @@ function showToast(msg) {
   }, 1100);
 }
 
+// ---- Lege-staat (vriendelijk, met icoon) ----
+function emptyState(icon, title, sub) {
+  return `<div class="empty-state"><div class="es-icon">${icon}</div>` +
+    `<div class="es-title">${title}</div>` +
+    (sub ? `<div class="es-sub">${sub}</div>` : '') + '</div>';
+}
+
 // ---- Bevestigingsdialoog ----
 function confirmDialog({ title = 'Bevestigen', message = '', confirmText = 'Oké', danger = false }) {
   return new Promise((resolve) => {
@@ -704,7 +711,7 @@ async function renderPijn() {
     wrap.appendChild(row);
   }
   if (!any) {
-    wrap.innerHTML = '<p class="empty-note">Nog geen pijnscores ingevuld.</p>';
+    wrap.innerHTML = emptyState('🩹', 'Nog geen pijnscores', 'Vul hierboven je pijn per dagdeel in.');
   }
 }
 
@@ -807,8 +814,8 @@ async function renderGeschiedenis() {
   list.innerHTML = '';
   if (days.filter(hasContent).length === 0) {
     list.innerHTML = (term || historyTagFilter)
-      ? '<p class="empty-note">Niets gevonden.</p>'
-      : '<p class="empty-note">Nog geen dagen ingevuld. Begin bij "Vandaag"!</p>';
+      ? emptyState('🔍', 'Niets gevonden', 'Probeer een andere zoekterm of wis het filter.')
+      : emptyState('🗓️', 'Nog geen dagen', 'Begin bij Vandaag — je eerste dag verschijnt hier.');
     return;
   }
   for (const rec of days) {
@@ -1430,6 +1437,14 @@ async function init() {
 
   await loadCurrent();
   switchTab('vandaag');
+
+  // onboarding bij eerste gebruik
+  const ob = document.getElementById('onboarding');
+  if (!localStorage.getItem('dagboek-onboarded')) ob.classList.remove('hidden');
+  document.getElementById('ob-start').addEventListener('click', () => {
+    localStorage.setItem('dagboek-onboarded', '1');
+    ob.classList.add('hidden');
+  });
 
   // pincode: vergrendel bij openen
   if (localStorage.getItem('dagboek-pin')) openLockScreen(false);

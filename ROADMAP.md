@@ -38,8 +38,8 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [x] U5 — Bevestigingsdialoog voor riskante acties
 - [x] U6 — Snackbar met "ongedaan maken"
 - [x] U7 — Scroll-naar-boven bij tabwissel
-- [ ] U8 — Onboarding/welkomstkaart eerste keer
-- [ ] U9 — Mooiere lege-staten
+- [x] U8 — Onboarding/welkomstkaart eerste keer
+- [x] U9 — Mooiere lege-staten
 - [ ] U10 — Zwevende snelknop (FAB)
 - [x] U11 — Mooiere grafieken (gradient, waardelabels)
 - [ ] U12 — Lettergrootte-instelling
