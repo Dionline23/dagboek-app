@@ -283,6 +283,47 @@ function showToast(msg) {
   }, 1100);
 }
 
+// ---- Bevestigingsdialoog ----
+function confirmDialog({ title = 'Bevestigen', message = '', confirmText = 'Oké', danger = false }) {
+  return new Promise((resolve) => {
+    const ov = document.getElementById('dialog');
+    document.getElementById('dialog-title').textContent = title;
+    document.getElementById('dialog-msg').textContent = message;
+    const c = document.getElementById('dialog-confirm');
+    const cancel = document.getElementById('dialog-cancel');
+    c.textContent = confirmText;
+    c.classList.toggle('danger', danger);
+    ov.classList.remove('hidden');
+    const cleanup = (val) => {
+      ov.classList.add('hidden');
+      c.onclick = null; cancel.onclick = null; ov.onclick = null;
+      resolve(val);
+    };
+    c.onclick = () => cleanup(true);
+    cancel.onclick = () => cleanup(false);
+    ov.onclick = (e) => { if (e.target === ov) cleanup(false); };
+  });
+}
+
+// ---- Snackbar met "ongedaan maken" ----
+let snackbarTimer = null;
+function showUndo(message, onUndo) {
+  const sb = document.getElementById('snackbar');
+  document.getElementById('snackbar-text').textContent = message;
+  const act = document.getElementById('snackbar-action');
+  sb.classList.remove('hidden');
+  void sb.offsetHeight; // forceer reflow zodat de transitie speelt
+  sb.classList.add('show');
+  clearTimeout(snackbarTimer);
+  const hide = () => {
+    sb.classList.remove('show');
+    setTimeout(() => sb.classList.add('hidden'), 250);
+    act.onclick = null;
+  };
+  act.onclick = () => { onUndo(); hide(); haptic(12); };
+  snackbarTimer = setTimeout(hide, 5000);
+}
+
 // ---- Score-knoppenrijen ----
 function buildScoreRow(container, field) {
   const min = Number(container.dataset.min);
@@ -435,8 +476,15 @@ function renderHabitsManager() {
     del.className = 'manage-del';
     del.textContent = '✕';
     del.addEventListener('click', () => {
-      saveHabits(getHabits().filter((x) => x.id !== h.id));
+      const removed = h;
+      saveHabits(getHabits().filter((x) => x.id !== removed.id));
       renderHabitsManager();
+      showUndo('Gewoonte verwijderd', () => {
+        const arr = getHabits();
+        arr.push(removed);
+        saveHabits(arr);
+        renderHabitsManager();
+      });
     });
     row.appendChild(name);
     row.appendChild(del);
@@ -1285,6 +1333,12 @@ async function init() {
     const file = e.target.files[0];
     if (!file) return;
     const status = document.getElementById('backup-status');
+    const ok = await confirmDialog({
+      title: 'Back-up importeren?',
+      message: 'Dagen uit het bestand worden samengevoegd; bestaande dagen met dezelfde datum worden overschreven.',
+      confirmText: 'Importeren',
+    });
+    if (!ok) { e.target.value = ''; return; }
     try {
       const count = await importBackup(file);
       await loadCurrent();
@@ -1293,6 +1347,20 @@ async function init() {
       status.textContent = `Import mislukt: ${err.message}`;
     }
     e.target.value = '';
+  });
+
+  // Dag leegmaken (met ongedaan-maken)
+  document.getElementById('btn-clear-day').addEventListener('click', async () => {
+    if (!hasContent(currentRecord)) { showToast('Deze dag is al leeg'); return; }
+    const snapshot = JSON.parse(JSON.stringify(currentRecord));
+    currentRecord = emptyRecord(currentDate);
+    await saveNow(true);
+    switchTab('vandaag');
+    showUndo('Dag leeggemaakt', async () => {
+      currentRecord = snapshot;
+      await saveNow(true);
+      switchTab('vandaag');
+    });
   });
 
   // instellingen

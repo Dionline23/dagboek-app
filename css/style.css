@@ -860,6 +860,80 @@ button.tag-chip.clickable { cursor: pointer; }
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* Snackbar met ongedaan maken */
+.snackbar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(78px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #2a2f3a;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 55;
+  max-width: 540px;
+  margin: 0 auto;
+}
+.snackbar.show { opacity: 1; transform: translateY(0); }
+.snackbar button {
+  border: none;
+  background: none;
+  color: var(--accent);
+  filter: brightness(1.4);
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Bevestigingsdialoog */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 90;
+}
+.dialog {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  max-width: 340px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  animation: tabIn 0.2s ease both;
+}
+.dialog h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.dialog p { margin: 0 0 18px; font-size: 0.9rem; color: var(--text-muted); line-height: 1.45; }
+.dialog-actions { display: flex; gap: 8px; }
+.btn.danger { background: #d9534f; }
+
+/* Tekst-knop (subtiel) */
+.text-btn {
+  display: block;
+  margin: 8px auto 4px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* Update-banner */
 .update-banner {
   position: fixed;

@@ -45,6 +45,24 @@
   <!-- Opgeslagen-melding -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
+  <!-- Snackbar met ongedaan maken -->
+  <div id="snackbar" class="snackbar hidden">
+    <span id="snackbar-text"></span>
+    <button id="snackbar-action" type="button">Ongedaan maken</button>
+  </div>
+
+  <!-- Bevestigingsdialoog -->
+  <div id="dialog" class="dialog-overlay hidden">
+    <div class="dialog" role="dialog" aria-modal="true">
+      <h3 id="dialog-title"></h3>
+      <p id="dialog-msg"></p>
+      <div class="dialog-actions">
+        <button id="dialog-cancel" class="btn btn-secondary" type="button">Annuleren</button>
+        <button id="dialog-confirm" class="btn" type="button">Oké</button>
+      </div>
+    </div>
+  </div>
+
   <header class="app-header">
     <h1 id="header-title">Dagboek</h1>
     <span id="header-date"></span>
@@ -194,6 +212,7 @@
         </div>
       </details>
 
+      <button type="button" id="btn-clear-day" class="text-btn">Dag leegmaken</button>
       <p class="save-note" id="save-note">Wijzigingen worden automatisch opgeslagen</p>
     </section>
 

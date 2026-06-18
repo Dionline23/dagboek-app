@@ -35,8 +35,8 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [x] U2 — Vorige/volgende dag-pijlen op Vandaag
 - [ ] U3 — Swipe tussen tabbladen
 - [x] U4 — Haptische feedback (vibratie)
-- [ ] U5 — Bevestigingsdialoog voor riskante acties
-- [ ] U6 — Snackbar met "ongedaan maken"
+- [x] U5 — Bevestigingsdialoog voor riskante acties
+- [x] U6 — Snackbar met "ongedaan maken"
 - [x] U7 — Scroll-naar-boven bij tabwissel
 - [ ] U8 — Onboarding/welkomstkaart eerste keer
 - [ ] U9 — Mooiere lege-staten
