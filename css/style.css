@@ -40,6 +40,20 @@
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
+/* AMOLED zwart thema (puur zwart, spaart accu op OLED-schermen) */
+:root[data-theme="black"] {
+  --bg: #000000;
+  --card: #0c0e12;
+  --text: #e8eaee;
+  --text-muted: #8b93a1;
+  --accent: #6f9cc9;
+  --accent-2: #f0a04b;
+  --border: #20252e;
+  --chart-grid: #20252e;
+  --chart-text: #8a919c;
+  --shadow: none;
+}
+
 /* Accentkleuren (gekozen via Inzichten → Weergave) */
 :root[data-accent="blauw"] { --accent: #4f7cac; }
 :root[data-accent="groen"] { --accent: #3e9e74; }

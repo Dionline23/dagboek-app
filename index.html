@@ -15,6 +15,7 @@
         var t = localStorage.getItem('dagboek-thema');
         if (t === 'licht') document.documentElement.dataset.theme = 'light';
         if (t === 'donker') document.documentElement.dataset.theme = 'dark';
+        if (t === 'zwart') document.documentElement.dataset.theme = 'black';
         var a = localStorage.getItem('dagboek-accent');
         if (a) document.documentElement.dataset.accent = a;
         // lock-scherm meteen tonen als er een pincode is (voorkomt flits van inhoud)
@@ -440,6 +441,7 @@
           <button data-theme="auto" class="active">Auto</button>
           <button data-theme="licht">Licht</button>
           <button data-theme="donker">Donker</button>
+          <button data-theme="zwart">Zwart</button>
         </div>
         <p class="hint" style="margin-top:12px">Accentkleur</p>
         <div class="swatch-row" id="accent-swatches">

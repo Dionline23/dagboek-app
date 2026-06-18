@@ -43,7 +43,7 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [ ] U10 — Zwevende snelknop (FAB)
 - [x] U11 — Mooiere grafieken (gradient, waardelabels)
 - [ ] U12 — Lettergrootte-instelling
-- [ ] U13 — AMOLED zwart-thema
+- [x] U13 — AMOLED zwart-thema
 - [ ] U14 — Sectiekoppen/kaartstijl
 - [ ] U15 — Kaart-entree-animatie (stagger)
 - [ ] U16 — Inklapbare instellingen
@@ -54,5 +54,5 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [ ] U21 — Terug-naar-boven-knop bij scrollen
 - [ ] U22 — Mooier vergrendelscherm
 - [ ] U23 — Toast-varianten (succes/fout) met icoon
-- [ ] U24 — Relatieve datum in header
+- [x] U24 — Relatieve datum in header
 - [ ] U25 — Algemene afwerking/spacing/splash

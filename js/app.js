@@ -598,7 +598,7 @@ async function renderVandaag() {
   const streak = await computeStreak();
   streakText = streak >= 2 ? `🔥 ${streak} dagen op rij` : streak === 1 ? '🔥 1 dag' : '';
   const isToday = currentDate === todayStr();
-  document.getElementById('header-date').textContent = formatDate(currentDate);
+  document.getElementById('header-date').textContent = relativeDayLabel(currentDate);
   const banner = document.getElementById('not-today-banner');
   banner.classList.toggle('hidden', isToday);
   if (!isToday) {
@@ -1069,7 +1069,7 @@ function switchTab(name) {
   }
   document.getElementById('header-title').textContent = TAB_TITLES[name];
   document.getElementById('header-date').textContent =
-    name === 'vandaag' || name === 'pijn' ? formatDate(currentDate) : '';
+    name === 'vandaag' || name === 'pijn' ? relativeDayLabel(currentDate) : '';
 
   // begin bovenaan bij elke tabwissel
   window.scrollTo({ top: 0, behavior: 'auto' });
@@ -1429,7 +1429,8 @@ async function init() {
       delete document.documentElement.dataset.theme;
       localStorage.removeItem('dagboek-thema');
     } else {
-      document.documentElement.dataset.theme = choice === 'licht' ? 'light' : 'dark';
+      const map = { licht: 'light', donker: 'dark', zwart: 'black' };
+      document.documentElement.dataset.theme = map[choice];
       localStorage.setItem('dagboek-thema', choice);
     }
     for (const b of document.querySelectorAll('#theme-segment button')) {
