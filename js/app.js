@@ -44,12 +44,6 @@ function emptyRecord(date) {
     gratitude: ['', '', ''],
     journal: '',
     exerciseMinutes: null,
-    sleepHours: null,
-    sleepQuality: null,
-    energy: null,
-    water: null,
-    weight: null,
-    steps: null,
     habits: {},
     painMorning: null,
     painAfternoon: null,
@@ -176,8 +170,6 @@ let streakText = '';
 function hasContent(r) {
   return r.mood != null || r.morningScore != null || r.eveningScore != null ||
     painRepresentative(r) != null || r.exerciseMinutes != null ||
-    r.sleepHours != null || r.sleepQuality != null || r.energy != null ||
-    r.water != null || r.weight != null || r.steps != null ||
     Object.values(r.habits || {}).some(Boolean) ||
     (r.painLocations || []).length > 0 || (r.journal || '').trim() !== '' ||
     (r.gratitude || []).some((g) => g && g.trim() !== '');
@@ -528,71 +520,6 @@ function renderHabitsManager() {
   }
 }
 
-// ---- Generieke mini-schaal (1..max) ----
-function buildMiniScale(container) {
-  const field = container.dataset.field;
-  const max = Number(container.dataset.max);
-  container.innerHTML = '';
-  for (let v = 1; v <= max; v++) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'mini-dot';
-    btn.textContent = v;
-    btn.dataset.value = v;
-    btn.addEventListener('click', () => {
-      currentRecord[field] = currentRecord[field] === v ? null : v;
-      renderMiniScale(container);
-      saveNow();
-    });
-    container.appendChild(btn);
-  }
-}
-
-function renderMiniScale(container) {
-  const field = container.dataset.field;
-  const max = Number(container.dataset.max);
-  for (const btn of container.children) {
-    const v = Number(btn.dataset.value);
-    const sel = v === currentRecord[field];
-    btn.classList.toggle('selected', sel);
-    btn.style.background = sel ? scaleColor(v, 1, max, 'good') : '';
-    btn.style.borderColor = sel ? scaleColor(v, 1, max, 'good') : '';
-  }
-}
-
-// ---- Generieke stepper (+/-) ----
-function buildStepper(el) {
-  const field = el.dataset.field;
-  const step = parseFloat(el.dataset.step);
-  const min = parseFloat(el.dataset.min);
-  const max = parseFloat(el.dataset.max);
-  const change = (dir) => {
-    let v = currentRecord[field];
-    if (v == null) v = 0;
-    v = Math.min(max, Math.max(min, Math.round((v + dir * step) * 10) / 10));
-    currentRecord[field] = v;
-    renderStepper(el);
-    saveNow();
-  };
-  el.querySelector('.step-minus').addEventListener('click', () => change(-1));
-  el.querySelector('.step-plus').addEventListener('click', () => change(1));
-}
-
-function renderStepper(el) {
-  const field = el.dataset.field;
-  const v = currentRecord[field];
-  el.querySelector('.step-val').textContent = v == null ? '–' : String(v).replace('.', ',');
-}
-
-function renderExtras() {
-  document.querySelectorAll('.extras-body .stepper').forEach(renderStepper);
-  document.querySelectorAll('.extras-body .mini-scale').forEach(renderMiniScale);
-  const w = document.getElementById('weight-input');
-  if (w) w.value = currentRecord.weight == null ? '' : currentRecord.weight;
-  const s = document.getElementById('steps-input');
-  if (s) s.value = currentRecord.steps == null ? '' : currentRecord.steps;
-}
-
 // ---- Tab: Vandaag ----
 async function renderVandaag() {
   const streak = await computeStreak();
@@ -616,7 +543,6 @@ async function renderVandaag() {
   document.getElementById('journal').value = currentRecord.journal || '';
   renderJournalTags();
   renderExercise();
-  renderExtras();
   renderHabits();
   renderDone();
   renderMissedPrompt();
@@ -956,28 +882,15 @@ function computeInsights(all) {
         : `Op sportdagen is je avondcijfer gemiddeld ${fmt(diff)} lager.` });
     }
   }
-  // slaap ↔ avondcijfer
-  const goodSleep = days.filter((d) => d.sleepHours != null && d.sleepHours >= 7);
-  const lessSleep = days.filter((d) => d.sleepHours != null && d.sleepHours < 7);
-  const evGood = goodSleep.map((d) => d.eveningScore).filter((v) => v != null);
-  const evLess = lessSleep.map((d) => d.eveningScore).filter((v) => v != null);
-  if (evGood.length >= MIN && evLess.length >= MIN) {
-    const diff = avg(evGood) - avg(evLess);
-    if (Math.abs(diff) >= 0.3) {
-      out.push({ icon: '😴', text: diff > 0
-        ? `Na 7+ uur slaap is je avondcijfer gemiddeld ${fmt(diff)} hoger.`
-        : `Na 7+ uur slaap is je avondcijfer gemiddeld ${fmt(diff)} lager.` });
-    }
-  }
-  // slaap ↔ pijn
-  const painGood = goodSleep.map(painRepresentative).filter((v) => v != null);
-  const painLess = lessSleep.map(painRepresentative).filter((v) => v != null);
-  if (painGood.length >= MIN && painLess.length >= MIN) {
-    const diff = avg(painLess) - avg(painGood);
-    if (Math.abs(diff) >= 0.3) {
-      out.push({ icon: '🛌', text: diff > 0
-        ? `Na een goede nachtrust is je pijn gemiddeld ${fmt(diff)} lager.`
-        : `Na een goede nachtrust is je pijn gemiddeld ${fmt(diff)} hoger.` });
+  // mood ↔ sport
+  const moodEx = exDays.map((d) => d.mood).filter((v) => v != null);
+  const moodNo = noEx.map((d) => d.mood).filter((v) => v != null);
+  if (moodEx.length >= MIN && moodNo.length >= MIN) {
+    const diff = avg(moodEx) - avg(moodNo);
+    if (Math.abs(diff) >= 0.2) {
+      out.push({ icon: '🙂', text: diff > 0
+        ? `Op sportdagen is je stemming gemiddeld ${fmt(diff)} beter.`
+        : `Op sportdagen is je stemming gemiddeld ${fmt(diff)} lager.` });
     }
   }
   return out;
@@ -987,7 +900,7 @@ function renderSmartInsights(all) {
   const wrap = document.getElementById('smart-list');
   const insights = computeInsights(all);
   if (!insights.length) {
-    wrap.innerHTML = emptyState('🔍', 'Nog te weinig data', 'Vul meer dagen in (met o.a. sport en slaap) — dan verschijnen hier verbanden.');
+    wrap.innerHTML = emptyState('🔍', 'Nog te weinig data', 'Vul meer dagen in (met o.a. sport) — dan verschijnen hier verbanden.');
     return;
   }
   wrap.innerHTML = '';
@@ -1042,16 +955,16 @@ async function renderInzichten() {
       .filter((p) => p.value != null);
 
   drawLineChart(document.getElementById('chart-scores'), [
-    { label: 'Ochtend', color: '#f0a04b', points: pick('morningScore') },
-    { label: 'Avond', color: '#4f7cac', points: pick('eveningScore') },
+    { label: 'Ochtend', color: '#f0c24b', points: pick('morningScore') },
+    { label: 'Avond', color: '#6aa0e6', points: pick('eveningScore') },
   ], { dates, yMin: 0, yMax: 10 });
 
   drawLineChart(document.getElementById('chart-pain'), [
-    { label: 'Pijn', color: '#d9534f', points: pickPain() },
+    { label: 'Pijn', color: '#ef8aa8', points: pickPain() },
   ], { dates, yMin: 0, yMax: 10 });
 
   drawLineChart(document.getElementById('chart-exercise'), [
-    { label: 'Sport', color: '#6fae6f', points: pick('exerciseMinutes') },
+    { label: 'Sport', color: '#5cc2a3', points: pick('exerciseMinutes') },
   ], { dates, yMin: 0 });
 }
 
@@ -1078,98 +991,6 @@ function switchTab(name) {
   if (name === 'pijn') renderPijn();
   if (name === 'geschiedenis') renderGeschiedenis();
   if (name === 'inzichten') renderInzichten();
-}
-
-// ---- Herinneringen (meldingen) ----
-function getReminders() {
-  try {
-    return JSON.parse(localStorage.getItem('dagboek-reminders')) || { enabled: false, morning: '08:00', evening: '21:00' };
-  } catch {
-    return { enabled: false, morning: '08:00', evening: '21:00' };
-  }
-}
-
-function saveReminders(r) {
-  localStorage.setItem('dagboek-reminders', JSON.stringify(r));
-}
-
-let reminderTimers = [];
-function scheduleReminders() {
-  reminderTimers.forEach(clearTimeout);
-  reminderTimers = [];
-  const r = getReminders();
-  if (!r.enabled || !('Notification' in window) || Notification.permission !== 'granted') return;
-  const now = new Date();
-  for (const t of [r.morning, r.evening]) {
-    if (!t) continue;
-    const [h, m] = t.split(':').map(Number);
-    const fire = new Date();
-    fire.setHours(h, m, 0, 0);
-    const delay = fire - now;
-    if (delay > 0 && delay < 24 * 3600 * 1000) {
-      reminderTimers.push(setTimeout(fireReminder, delay));
-    }
-  }
-}
-
-function fireReminder() {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  const body = hasContent(currentRecord) ? 'Nog iets toe te voegen aan je dag? ✍️' : 'Tijd om je dagboek in te vullen ✍️';
-  if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-    navigator.serviceWorker.ready.then((reg) => reg.showNotification('Dagboek', { body, icon: 'icons/icon-192.png', tag: 'dagboek-reminder' }));
-  } else {
-    new Notification('Dagboek', { body, icon: 'icons/icon-192.png' });
-  }
-}
-
-function initReminderUI() {
-  const r = getReminders();
-  const enabled = document.getElementById('reminders-enabled');
-  const morning = document.getElementById('reminder-morning');
-  const evening = document.getElementById('reminder-evening');
-  const status = document.getElementById('reminder-status');
-  enabled.checked = r.enabled;
-  morning.value = r.morning;
-  evening.value = r.evening;
-
-  function refreshStatus() {
-    const cur = getReminders();
-    if (!cur.enabled) {
-      status.textContent = 'Herinneringen staan uit.';
-    } else if (!('Notification' in window)) {
-      status.textContent = 'Dit apparaat ondersteunt geen meldingen.';
-    } else if (Notification.permission === 'denied') {
-      status.textContent = 'Meldingen zijn geblokkeerd. Sta ze toe in je browser-/app-instellingen.';
-    } else if (Notification.permission === 'granted') {
-      status.textContent = `Aan om ${cur.morning} en ${cur.evening}. Werkt het best als je de app dagelijks even opent.`;
-    } else {
-      status.textContent = 'Tik op de schakelaar om meldingen toe te staan.';
-    }
-  }
-
-  enabled.addEventListener('change', async () => {
-    const cur = getReminders();
-    cur.enabled = enabled.checked;
-    if (cur.enabled && 'Notification' in window && Notification.permission === 'default') {
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') cur.enabled = false;
-      enabled.checked = cur.enabled;
-    }
-    saveReminders(cur);
-    scheduleReminders();
-    refreshStatus();
-  });
-  const onTime = () => {
-    const cur = getReminders();
-    cur.morning = morning.value || '08:00';
-    cur.evening = evening.value || '21:00';
-    saveReminders(cur);
-    scheduleReminders();
-    refreshStatus();
-  };
-  morning.addEventListener('change', onTime);
-  evening.addEventListener('change', onTime);
-  refreshStatus();
 }
 
 // ---- Pincode (app-slot) ----
@@ -1297,7 +1118,7 @@ function haptic(ms = 8) {
 async function init() {
   // subtiele trilling bij het tikken op bedienbare elementen
   document.addEventListener('click', (e) => {
-    if (e.target.closest('button:not(:disabled), .region, .swatch')) haptic();
+    if (e.target.closest('button:not(:disabled), .region')) haptic();
   }, true);
 
   buildMoodRow();
@@ -1307,18 +1128,6 @@ async function init() {
   buildScoreRow(document.getElementById('pain-afternoon'), 'painAfternoon');
   buildScoreRow(document.getElementById('pain-evening'), 'painEvening');
   buildExercisePresets();
-  document.querySelectorAll('.extras-body .mini-scale').forEach(buildMiniScale);
-  document.querySelectorAll('.extras-body .stepper').forEach(buildStepper);
-  document.getElementById('weight-input').addEventListener('input', (e) => {
-    const v = e.target.value === '' ? null : Math.max(0, parseFloat(e.target.value) || 0);
-    currentRecord.weight = v;
-    scheduleSave();
-  });
-  document.getElementById('steps-input').addEventListener('input', (e) => {
-    const v = e.target.value === '' ? null : Math.max(0, parseInt(e.target.value, 10) || 0);
-    currentRecord.steps = v;
-    scheduleSave();
-  });
 
   // Dankbaarheid: aantal velden instellen
   const gratCountVal = document.getElementById('grat-count-val');
@@ -1416,42 +1225,6 @@ async function init() {
     renderCalendar();
   });
 
-  // weergave: thema + accentkleur
-  const savedTheme = localStorage.getItem('dagboek-thema') || 'auto';
-  for (const b of document.querySelectorAll('#theme-segment button')) {
-    b.classList.toggle('active', b.dataset.theme === savedTheme);
-  }
-  document.getElementById('theme-segment').addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    const choice = btn.dataset.theme;
-    if (choice === 'auto') {
-      delete document.documentElement.dataset.theme;
-      localStorage.removeItem('dagboek-thema');
-    } else {
-      const map = { licht: 'light', donker: 'dark', zwart: 'black' };
-      document.documentElement.dataset.theme = map[choice];
-      localStorage.setItem('dagboek-thema', choice);
-    }
-    for (const b of document.querySelectorAll('#theme-segment button')) {
-      b.classList.toggle('active', b === btn);
-    }
-  });
-
-  const savedAccent = localStorage.getItem('dagboek-accent') || 'blauw';
-  for (const b of document.querySelectorAll('.swatch')) {
-    b.classList.toggle('active', b.dataset.accent === savedAccent);
-  }
-  document.getElementById('accent-swatches').addEventListener('click', (e) => {
-    const btn = e.target.closest('.swatch');
-    if (!btn) return;
-    document.documentElement.dataset.accent = btn.dataset.accent;
-    localStorage.setItem('dagboek-accent', btn.dataset.accent);
-    for (const b of document.querySelectorAll('.swatch')) {
-      b.classList.toggle('active', b === btn);
-    }
-  });
-
   for (const btn of document.querySelectorAll('.tabbtn')) {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   }
@@ -1480,6 +1253,15 @@ async function init() {
   });
   document.getElementById('btn-import').addEventListener('click', () => {
     document.getElementById('import-file').click();
+  });
+  document.getElementById('btn-export-csv').addEventListener('click', async () => {
+    await saveNow(true);
+    await exportCsv();
+    document.getElementById('backup-status').textContent = 'CSV gedownload.';
+  });
+  document.getElementById('btn-export-txt').addEventListener('click', async () => {
+    await saveNow(true);
+    await exportText();
   });
   document.getElementById('import-file').addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -1516,7 +1298,6 @@ async function init() {
   });
 
   // instellingen
-  initReminderUI();
   initPinUI();
   initGoalUI();
 
@@ -1525,10 +1306,9 @@ async function init() {
     if (waitingWorker) waitingWorker.postMessage({ type: 'SKIP_WAITING' });
   });
 
-  // bij terugkeren: nieuwe dag? + herinneringen herplannen
+  // bij terugkeren: nieuwe dag?
   document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'visible') {
-      scheduleReminders();
       if (currentDate < todayStr() && document.getElementById('not-today-banner').classList.contains('hidden')) {
         currentDate = todayStr();
         await loadCurrent();
@@ -1551,8 +1331,6 @@ async function init() {
   // pincode: vergrendel bij openen
   if (localStorage.getItem('dagboek-pin')) openLockScreen(false);
   else document.documentElement.classList.remove('locked');
-
-  scheduleReminders();
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').then((reg) => {

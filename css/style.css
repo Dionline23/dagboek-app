@@ -1,65 +1,19 @@
 :root {
-  --bg: #f4f5f7;
+  /* Outlive-stijl: clean wit, modern en fris, met de pastelkleuren van de boekkaft */
+  --bg: #f7f8fb;
   --card: #ffffff;
-  --text: #1d2430;
+  --text: #15171c;
   --text-muted: #6b7280;
-  --accent: #4f7cac;
-  --accent-2: #f0a04b;
-  --border: #e3e6ea;
-  --chart-grid: #e3e6ea;
-  --chart-text: #8a919c;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+  --accent: #18b6a6;          /* fris teal */
+  --accent-press: #129a8c;
+  --accent-2: #f3c07b;        /* zacht amber voor banners */
+  --border: #ecedf2;
+  --chart-grid: #eceef2;
+  --chart-text: #9aa1ad;
+  --shadow: 0 1px 2px rgba(20, 22, 27, 0.04), 0 6px 20px rgba(20, 22, 27, 0.05);
+  /* signatuur-kleurverloop van de kaft (groen → geel → roze → blauw → paars) */
+  --grad: linear-gradient(120deg, #86d9c0, #f3e79a, #f4abc4, #9cc1f0, #c5b1ea);
 }
-
-/* Donker thema: via systeemvoorkeur (tenzij expliciet licht gekozen) of expliciet gekozen */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #14181f;
-    --card: #1e242e;
-    --text: #e8eaee;
-    --text-muted: #9aa3b0;
-    --accent: #6f9cc9;
-    --accent-2: #f0a04b;
-    --border: #2c3440;
-    --chart-grid: #2c3440;
-    --chart-text: #8a919c;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  }
-}
-
-:root[data-theme="dark"] {
-  --bg: #14181f;
-  --card: #1e242e;
-  --text: #e8eaee;
-  --text-muted: #9aa3b0;
-  --accent: #6f9cc9;
-  --accent-2: #f0a04b;
-  --border: #2c3440;
-  --chart-grid: #2c3440;
-  --chart-text: #8a919c;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-}
-
-/* AMOLED zwart thema (puur zwart, spaart accu op OLED-schermen) */
-:root[data-theme="black"] {
-  --bg: #000000;
-  --card: #0c0e12;
-  --text: #e8eaee;
-  --text-muted: #8b93a1;
-  --accent: #6f9cc9;
-  --accent-2: #f0a04b;
-  --border: #20252e;
-  --chart-grid: #20252e;
-  --chart-text: #8a919c;
-  --shadow: none;
-}
-
-/* Accentkleuren (gekozen via Inzichten → Weergave) */
-:root[data-accent="blauw"] { --accent: #4f7cac; }
-:root[data-accent="groen"] { --accent: #3e9e74; }
-:root[data-accent="paars"] { --accent: #8a6fc9; }
-:root[data-accent="roze"] { --accent: #c4628c; }
-:root[data-accent="oranje"] { --accent: #d98a3d; }
 
 * { box-sizing: border-box; }
 
@@ -1099,3 +1053,42 @@ html.locked, html.locked body { overflow: hidden; }
   cursor: pointer;
 }
 .keypad .key-empty { border: none; background: none; cursor: default; }
+
+/* ===================== Outlive-stijl: afwerking ===================== */
+/* Vette, strakke koppen zoals op de boekkaft */
+.app-header h1 { font-weight: 800; letter-spacing: -0.02em; }
+.card h2,
+.onboarding-card h2,
+.dialog h3 { font-weight: 800; letter-spacing: -0.01em; }
+
+/* Signatuur-kleurverloop onder de header */
+.app-header { position: relative; }
+.app-header::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 3px;
+  background: var(--grad);
+}
+
+/* Zachtere, modernere kaarten */
+.card { border-radius: 16px; }
+
+/* Voortgangsring in kaft-kleurverloop */
+.progress-ring .ring-fill,
+.progress-ring .ring-fill.complete { stroke: url(#ringGrad); }
+
+/* Actieve-tab-indicator in kleurverloop */
+.tabbtn::before { background: var(--grad); width: 28px; height: 3px; }
+
+/* Onboarding-hero in kaftstijl */
+.ob-emoji {
+  width: 76px; height: 76px;
+  margin: 4px auto 0;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--grad);
+}
+
+/* Primaire knoppen: indrukstaat */
+.btn:active { background: var(--accent-press); }

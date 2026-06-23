@@ -3,22 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#4f7cac">
+  <meta name="theme-color" content="#ffffff">
   <title>Dagboek</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <script>
-    // thema/accent direct toepassen, vóór het renderen (voorkomt kleurflits)
+    // lock-scherm meteen tonen als er een pincode is (voorkomt flits van inhoud)
     (function () {
       try {
-        var t = localStorage.getItem('dagboek-thema');
-        if (t === 'licht') document.documentElement.dataset.theme = 'light';
-        if (t === 'donker') document.documentElement.dataset.theme = 'dark';
-        if (t === 'zwart') document.documentElement.dataset.theme = 'black';
-        var a = localStorage.getItem('dagboek-accent');
-        if (a) document.documentElement.dataset.accent = a;
-        // lock-scherm meteen tonen als er een pincode is (voorkomt flits van inhoud)
         if (localStorage.getItem('dagboek-pin')) document.documentElement.classList.add('locked');
       } catch (e) {}
     })();
@@ -48,7 +41,7 @@
         <li><span>🩹</span><div><b>Pijn</b> — per dagdeel + lichaamskaart</div></li>
         <li><span>📅</span><div><b>Historie</b> — kalender & terugzoeken</div></li>
         <li><span>📈</span><div><b>Inzichten</b> — grafieken & trends</div></li>
-        <li><span>⚙️</span><div><b>Meer</b> — herinneringen, pincode, back-up</div></li>
+        <li><span>⚙️</span><div><b>Meer</b> — pincode, back-up, instellingen</div></li>
       </ul>
       <p class="ob-privacy">🔒 Je gegevens blijven op dit apparaat. Maak af en toe een back-up via Meer.</p>
       <button id="ob-start" class="btn" type="button">Aan de slag</button>
@@ -108,6 +101,14 @@
 
       <div class="today-summary" id="today-summary">
         <svg class="progress-ring" viewBox="0 0 48 48" aria-hidden="true">
+          <defs>
+            <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#86d9c0"></stop>
+              <stop offset="35%" stop-color="#f3e79a"></stop>
+              <stop offset="65%" stop-color="#f4abc4"></stop>
+              <stop offset="100%" stop-color="#9cc1f0"></stop>
+            </linearGradient>
+          </defs>
           <circle class="ring-bg" cx="24" cy="24" r="20"></circle>
           <circle class="ring-fill" cx="24" cy="24" r="20" id="ring-fill"></circle>
           <text x="24" y="24" id="ring-text">0/5</text>
@@ -191,50 +192,6 @@
           <span>minuten</span>
         </div>
       </div>
-
-      <details class="card extras-card" id="extras-card">
-        <summary><span>➕ Meer bijhouden</span><span class="chev">▾</span></summary>
-        <div class="extras-body">
-          <div class="tracker">
-            <span class="tracker-label">😴 Slaap</span>
-            <div class="stepper" data-field="sleepHours" data-step="0.5" data-min="0" data-max="24">
-              <button type="button" class="step-minus" aria-label="Minder">−</button>
-              <span class="step-val" id="sleepHours-val">–</span>
-              <button type="button" class="step-plus" aria-label="Meer">+</button>
-              <span class="step-unit">uur</span>
-            </div>
-            <span class="tracker-sub">Kwaliteit</span>
-            <div class="mini-scale" id="sleepQuality-scale" data-field="sleepQuality" data-max="5"></div>
-          </div>
-          <div class="tracker">
-            <span class="tracker-label">🔋 Energie</span>
-            <div class="mini-scale" id="energy-scale" data-field="energy" data-max="5"></div>
-          </div>
-          <div class="tracker">
-            <span class="tracker-label">💧 Water</span>
-            <div class="stepper" data-field="water" data-step="1" data-min="0" data-max="30">
-              <button type="button" class="step-minus" aria-label="Minder">−</button>
-              <span class="step-val">–</span>
-              <button type="button" class="step-plus" aria-label="Meer">+</button>
-              <span class="step-unit">glazen</span>
-            </div>
-          </div>
-          <div class="tracker">
-            <span class="tracker-label">⚖️ Gewicht</span>
-            <div class="weight-input">
-              <input type="number" id="weight-input" inputmode="decimal" step="0.1" min="0" max="500" placeholder="–">
-              <span class="step-unit">kg</span>
-            </div>
-          </div>
-          <div class="tracker">
-            <span class="tracker-label">👟 Stappen</span>
-            <div class="weight-input">
-              <input type="number" id="steps-input" inputmode="numeric" step="100" min="0" max="100000" placeholder="–">
-              <span class="step-unit">stappen</span>
-            </div>
-          </div>
-        </div>
-      </details>
 
       <button type="button" id="btn-clear-day" class="text-btn">Dag leegmaken</button>
       <p class="save-note" id="save-note">Wijzigingen worden automatisch opgeslagen</p>
@@ -350,8 +307,8 @@
       <div class="card">
         <h2>Dagcijfers</h2>
         <div class="legend">
-          <span><i style="background:#f0a04b"></i> Ochtend</span>
-          <span><i style="background:#4f7cac"></i> Avond</span>
+          <span><i style="background:#f0c24b"></i> Ochtend</span>
+          <span><i style="background:#6aa0e6"></i> Avond</span>
         </div>
         <canvas id="chart-scores" class="chart"></canvas>
       </div>
@@ -380,20 +337,6 @@
 
     <!-- TAB: Instellingen -->
     <section id="tab-meer" class="tab hidden">
-      <div class="card">
-        <h2>🔔 Herinneringen</h2>
-        <p class="hint">Krijg een melding om je dagboek in te vullen.</p>
-        <label class="switch-row">
-          <span>Herinneringen aan</span>
-          <input type="checkbox" id="reminders-enabled">
-        </label>
-        <div class="time-row">
-          <label>☀️ Ochtend <input type="time" id="reminder-morning" value="08:00"></label>
-          <label>🌙 Avond <input type="time" id="reminder-evening" value="21:00"></label>
-        </div>
-        <p class="hint" id="reminder-status">Tip: werkt het best als je de app dagelijks even opent.</p>
-      </div>
-
       <div class="card">
         <h2>🔒 Pincode</h2>
         <p class="hint" id="pin-status"></p>
@@ -435,25 +378,6 @@
       </div>
 
       <div class="card">
-        <h2>🎨 Weergave</h2>
-        <p class="hint">Thema</p>
-        <div class="segment" id="theme-segment">
-          <button data-theme="auto" class="active">Auto</button>
-          <button data-theme="licht">Licht</button>
-          <button data-theme="donker">Donker</button>
-          <button data-theme="zwart">Zwart</button>
-        </div>
-        <p class="hint" style="margin-top:12px">Accentkleur</p>
-        <div class="swatch-row" id="accent-swatches">
-          <button class="swatch" data-accent="blauw" style="background:#4f7cac" aria-label="Blauw"></button>
-          <button class="swatch" data-accent="groen" style="background:#3e9e74" aria-label="Groen"></button>
-          <button class="swatch" data-accent="paars" style="background:#8a6fc9" aria-label="Paars"></button>
-          <button class="swatch" data-accent="roze" style="background:#c4628c" aria-label="Roze"></button>
-          <button class="swatch" data-accent="oranje" style="background:#d98a3d" aria-label="Oranje"></button>
-        </div>
-      </div>
-
-      <div class="card">
         <h2>🔗 Koppelingen &amp; sync</h2>
         <p class="hint">Binnenkort beschikbaar.</p>
         <button class="link-btn" disabled>⌚ Garmin Connect koppelen <span class="soon-badge">Binnenkort</span></button>
@@ -468,6 +392,10 @@
           <button id="btn-export" class="btn">Exporteren</button>
           <button id="btn-import" class="btn btn-secondary">Importeren</button>
           <input type="file" id="import-file" accept=".json,application/json" hidden>
+        </div>
+        <div class="backup-row" style="margin-top:8px">
+          <button id="btn-export-csv" class="btn btn-secondary">📊 CSV</button>
+          <button id="btn-export-txt" class="btn btn-secondary">📄 Tekst / delen</button>
         </div>
         <p class="hint" id="backup-status"></p>
       </div>

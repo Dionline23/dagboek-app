@@ -17,8 +17,13 @@ Back-up vooraf: `backups/dagboek-app-backup-*.zip` + git-tag `backup-voor-50-ver
 - [ ] F11 — Year-in-pixels jaaroverzicht
 - [ ] F12 — Maandsamenvatting
 - [x] F13 — Beste & zwaarste dagen
-- [ ] F14 — CSV-export
-- [ ] F15 — Tekst-export + delen (Web Share)
+- [x] F14 — CSV-export
+- [x] F15 — Tekst-export + delen (Web Share)
+
+> **Redesign (juni 2026):** batch gestopt. Verwijderd op verzoek: "Meer bijhouden"-trackers
+> (water/gewicht/slaap/energie/stappen), notificaties/herinneringen, thema-keuze en dark/light/zwart.
+> Eén vaste stijl toegevoegd in de look van het boek *Outlive*: clean wit, modern, fris,
+> met de pastelkleuren van de kaft.
 - [ ] F16 — Wekelijkse terugblik
 - [ ] F17 — Favoriete dagen (ster) + filter
 - [ ] F18 — Zoekfilters (mood/score/tag)
