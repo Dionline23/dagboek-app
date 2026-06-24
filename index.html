@@ -9,11 +9,15 @@
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <script>
-    // lock-scherm meteen tonen als er een pincode is (voorkomt flits van inhoud)
+    // thema + lock-scherm meteen toepassen (voorkomt flits van verkeerde kleuren/inhoud)
     (function () {
       try {
+        var t = localStorage.getItem('dagboek-theme') || 'auto';
+        document.documentElement.dataset.theme = t;
         if (localStorage.getItem('dagboek-pin')) document.documentElement.classList.add('locked');
-      } catch (e) {}
+      } catch (e) {
+        document.documentElement.dataset.theme = 'auto';
+      }
     })();
   </script>
   <link rel="stylesheet" href="css/style.css">
@@ -124,11 +128,15 @@
         <div id="onthisday-list"></div>
       </div>
 
+      <h3 class="section-head">Hoe voel je je?</h3>
+
       <div class="card">
         <h2>😊 Stemming</h2>
         <p class="hint">Hoe voel je je vandaag?</p>
         <div class="mood-row" id="mood-row"></div>
       </div>
+
+      <h3 class="section-head">Cijfers</h3>
 
       <div class="card" data-done-card="morning">
         <div class="card-head">
@@ -147,6 +155,8 @@
         <p class="hint">Hoe was je dag?</p>
         <div class="score-row" id="evening-scores" data-min="1" data-max="10"></div>
       </div>
+
+      <h3 class="section-head">Reflectie</h3>
 
       <div class="card" data-done-card="gratitude">
         <div class="card-head">
@@ -174,6 +184,8 @@
         <p class="prompt-text" id="prompt-text"></p>
         <button type="button" id="btn-prompt-insert" class="btn btn-secondary">Schrijf hierover ✍️</button>
       </div>
+
+      <h3 class="section-head">Gewoontes &amp; beweging</h3>
 
       <div class="card" id="habits-card">
         <h2>✅ Gewoontes</h2>
@@ -337,6 +349,17 @@
 
     <!-- TAB: Instellingen -->
     <section id="tab-meer" class="tab hidden">
+      <div class="card">
+        <h2>🎨 Weergave</h2>
+        <p class="hint">Kies het thema van de app.</p>
+        <div class="segment segment-theme" id="theme-segment">
+          <button data-theme-choice="auto" class="active">Auto</button>
+          <button data-theme-choice="light">Licht</button>
+          <button data-theme-choice="dark">Donker</button>
+          <button data-theme-choice="amoled">AMOLED</button>
+        </div>
+      </div>
+
       <div class="card">
         <h2>🔒 Pincode</h2>
         <p class="hint" id="pin-status"></p>

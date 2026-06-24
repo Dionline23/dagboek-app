@@ -78,8 +78,9 @@ function buildMoodRow() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'mood-btn';
-    btn.textContent = m.e;
+    btn.innerHTML = `<span class="mood-emoji">${m.e}</span><span class="mood-label">${m.l}</span>`;
     btn.title = m.l;
+    btn.setAttribute('aria-label', m.l);
     btn.dataset.value = m.v;
     btn.addEventListener('click', () => {
       currentRecord.mood = currentRecord.mood === m.v ? null : m.v;
@@ -1090,6 +1091,47 @@ async function onKeypad(k) {
   }
 }
 
+// ---- Thema (licht/donker/AMOLED/auto) ----
+const THEME_COLORS = { light: '#ffffff', dark: '#181b22', amoled: '#000000' };
+
+function applyThemeColorMeta(theme) {
+  let resolved = theme;
+  if (theme === 'auto') {
+    resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', THEME_COLORS[resolved] || '#ffffff');
+}
+
+function getTheme() {
+  return localStorage.getItem('dagboek-theme') || 'auto';
+}
+
+function setTheme(theme) {
+  localStorage.setItem('dagboek-theme', theme);
+  document.documentElement.dataset.theme = theme;
+  applyThemeColorMeta(theme);
+  for (const b of document.querySelectorAll('#theme-segment button')) {
+    b.classList.toggle('active', b.dataset.themeChoice === theme);
+  }
+}
+
+function initThemeUI() {
+  const cur = getTheme();
+  document.documentElement.dataset.theme = cur;
+  setTheme(cur);
+  document.getElementById('theme-segment').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    setTheme(btn.dataset.themeChoice);
+    haptic(10);
+  });
+  // volg systeemwissel wanneer 'auto' actief is
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (getTheme() === 'auto') applyThemeColorMeta('auto');
+  });
+}
+
 // ---- Sportdoel ----
 function initGoalUI() {
   const input = document.getElementById('goal-input');
@@ -1298,6 +1340,7 @@ async function init() {
   });
 
   // instellingen
+  initThemeUI();
   initPinUI();
   initGoalUI();
 
