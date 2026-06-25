@@ -686,45 +686,22 @@ function renderPainFields() {
     const valEl = il.querySelector('.pf-val');
     const setVal = () => { valEl.textContent = d.intensity == null ? '–' : String(Math.round(d.intensity * 10) / 10).replace('.', ','); };
 
-    const scale = document.createElement('div');
-    scale.className = 'pf-scale';
-    const refreshScale = () => {
-      for (const b of scale.children) {
-        const v = Number(b.dataset.value);
-        const sel = d.intensity != null && Math.round(d.intensity) === v;
-        b.classList.toggle('sel', sel);
-        b.style.background = sel ? scaleColor(v, 1, 10, 'bad') : '';
-        b.style.borderColor = sel ? scaleColor(v, 1, 10, 'bad') : '';
-      }
-    };
-    for (let v = 1; v <= 10; v++) {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = v;
-      b.dataset.value = v;
-      b.addEventListener('click', () => { d.intensity = v; refreshScale(); setVal(); saveNow(); });
-      scale.appendChild(b);
-    }
-    block.appendChild(scale);
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.className = 'pf-slider';
+    slider.min = '1';
+    slider.max = '10';
+    slider.step = '0.1';
+    slider.value = d.intensity == null ? '5' : String(d.intensity);
+    slider.setAttribute('aria-label', 'Intensiteit');
+    slider.addEventListener('input', () => {
+      d.intensity = Math.round(parseFloat(slider.value) * 10) / 10;
+      setVal();
+      scheduleSave();
+    });
+    slider.addEventListener('change', () => saveNow());
+    block.appendChild(slider);
 
-    const fine = document.createElement('div');
-    fine.className = 'pf-fine';
-    const adj = (delta) => {
-      let v = d.intensity == null ? 1 : d.intensity + delta;
-      v = Math.min(10, Math.max(1, Math.round(v * 10) / 10));
-      d.intensity = v;
-      refreshScale(); setVal(); saveNow();
-    };
-    const minus = document.createElement('button');
-    minus.type = 'button'; minus.textContent = '− 0,1';
-    minus.addEventListener('click', () => adj(-0.1));
-    const plus = document.createElement('button');
-    plus.type = 'button'; plus.textContent = '+ 0,1';
-    plus.addEventListener('click', () => adj(0.1));
-    fine.appendChild(minus); fine.appendChild(plus);
-    block.appendChild(fine);
-
-    refreshScale();
     setVal();
     wrap.appendChild(block);
   }
@@ -745,7 +722,6 @@ async function renderPijn() {
   updateScoreRow(document.getElementById('pain-morning'), currentRecord.painMorning);
   updateScoreRow(document.getElementById('pain-afternoon'), currentRecord.painAfternoon);
   updateScoreRow(document.getElementById('pain-evening'), currentRecord.painEvening);
-  document.getElementById('pain-note').value = currentRecord.painNote || '';
   renderBodyMap();
   renderPainFields();
   renderDone();
@@ -1397,10 +1373,6 @@ async function init() {
   document.getElementById('journal').addEventListener('input', (e) => {
     currentRecord.journal = e.target.value;
     renderJournalTags();
-    scheduleSave();
-  });
-  document.getElementById('pain-note').addEventListener('input', (e) => {
-    currentRecord.painNote = e.target.value;
     scheduleSave();
   });
   document.getElementById('exercise-minutes').addEventListener('input', (e) => {
