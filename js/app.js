@@ -552,28 +552,25 @@ async function renderVandaag() {
 
 // ---- Tab: Pijn ----
 const REGION_LABELS = {
+  // voorkant
   hoofd: 'Hoofd', nek: 'Nek', 'schouder-l': 'Schouder links', 'schouder-r': 'Schouder rechts',
   borst: 'Borst', buik: 'Buik', 'arm-l': 'Arm links', 'arm-r': 'Arm rechts',
   'hand-l': 'Hand links', 'hand-r': 'Hand rechts', heup: 'Heupen/bekken',
   'been-l': 'Been links', 'been-r': 'Been rechts', 'knie-l': 'Knie links', 'knie-r': 'Knie rechts',
-  'voet-l': 'Voet links', 'voet-r': 'Voet rechts', onderrug: 'Onderrug', bovenrug: 'Bovenrug',
+  'voet-l': 'Voet links', 'voet-r': 'Voet rechts',
+  // achterkant
+  achterhoofd: 'Achterhoofd', 'nek-achter': 'Nek (achter)',
+  'schouder-l-achter': 'Schouder links (achter)', 'schouder-r-achter': 'Schouder rechts (achter)',
+  bovenrug: 'Bovenrug', onderrug: 'Onderrug',
+  'arm-l-achter': 'Arm links (achter)', 'arm-r-achter': 'Arm rechts (achter)',
+  'bil-l': 'Bil links', 'bil-r': 'Bil rechts',
+  'dij-l-achter': 'Bovenbeen links (achter)', 'dij-r-achter': 'Bovenbeen rechts (achter)',
+  'kuit-l': 'Kuit links', 'kuit-r': 'Kuit rechts', 'hiel-l': 'Hiel links', 'hiel-r': 'Hiel rechts',
 };
-const EXTRA_REGIONS = ['onderrug', 'bovenrug'];
 
 function buildBodyMap() {
-  for (const shape of document.querySelectorAll('#bodymap .region')) {
+  for (const shape of document.querySelectorAll('.bodymap .region')) {
     shape.addEventListener('click', () => toggleRegion(shape.dataset.region));
-  }
-  const chips = document.getElementById('region-chips-extra');
-  chips.innerHTML = '';
-  for (const id of EXTRA_REGIONS) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'region-chip';
-    btn.dataset.region = id;
-    btn.textContent = REGION_LABELS[id];
-    btn.addEventListener('click', () => toggleRegion(id));
-    chips.appendChild(btn);
   }
 }
 
@@ -588,11 +585,8 @@ function toggleRegion(id) {
 
 function renderBodyMap() {
   const locs = currentRecord.painLocations || [];
-  for (const shape of document.querySelectorAll('#bodymap .region')) {
+  for (const shape of document.querySelectorAll('.bodymap .region')) {
     shape.classList.toggle('sel', locs.includes(shape.dataset.region));
-  }
-  for (const chip of document.querySelectorAll('#region-chips-extra .region-chip')) {
-    chip.classList.toggle('sel', locs.includes(chip.dataset.region));
   }
   const text = document.getElementById('pain-locations-text');
   text.textContent = locs.length

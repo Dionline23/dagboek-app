@@ -901,17 +901,20 @@ button.tag-chip.clickable { cursor: pointer; }
 /* Sub-labels (pijn dagdelen) */
 .sub-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin: 10px 0 6px; }
 
-/* Lichaamskaart */
-.bodymap-wrap { display: flex; justify-content: center; }
-#bodymap { width: 170px; max-width: 60%; height: auto; }
-#bodymap .region {
+/* Lichaamskaart (voor- en achterkant naast elkaar) */
+.bodymap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bodymap-col { display: flex; flex-direction: column; align-items: center; }
+.bodymap-cap { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
+.bodymap-wrap { display: flex; justify-content: center; width: 100%; }
+.bodymap { width: 100%; max-width: 150px; height: auto; }
+.bodymap .region {
   fill: color-mix(in srgb, var(--accent) 22%, var(--card));
   stroke: var(--border);
   stroke-width: 1;
   cursor: pointer;
   transition: fill 0.12s;
 }
-#bodymap .region.sel { fill: #d9534f; stroke: #b73d39; }
+.bodymap .region.sel { fill: #e8788f; stroke: #d3667c; }
 
 .region-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .region-chip {

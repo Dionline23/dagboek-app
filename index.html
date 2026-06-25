@@ -233,30 +233,56 @@
 
       <div class="card">
         <h2>📍 Waar zit de pijn?</h2>
-        <p class="hint">Tik de plekken aan op het lichaam.</p>
-        <div class="bodymap-wrap">
-          <svg id="bodymap" viewBox="0 0 200 380" xmlns="http://www.w3.org/2000/svg" aria-label="Lichaamskaart">
-            <ellipse class="region" data-region="hoofd" cx="100" cy="34" rx="22" ry="26"></ellipse>
-            <rect class="region" data-region="nek" x="91" y="58" width="18" height="13" rx="4"></rect>
-            <rect class="region" data-region="schouder-l" x="54" y="70" width="30" height="15" rx="7"></rect>
-            <rect class="region" data-region="schouder-r" x="116" y="70" width="30" height="15" rx="7"></rect>
-            <rect class="region" data-region="borst" x="72" y="73" width="56" height="40" rx="10"></rect>
-            <rect class="region" data-region="buik" x="74" y="114" width="52" height="46" rx="10"></rect>
-            <rect class="region" data-region="arm-l" x="47" y="74" width="16" height="64" rx="8"></rect>
-            <rect class="region" data-region="arm-r" x="137" y="74" width="16" height="64" rx="8"></rect>
-            <ellipse class="region" data-region="hand-l" cx="55" cy="150" rx="9" ry="11"></ellipse>
-            <ellipse class="region" data-region="hand-r" cx="145" cy="150" rx="9" ry="11"></ellipse>
-            <rect class="region" data-region="heup" x="74" y="161" width="52" height="26" rx="10"></rect>
-            <rect class="region" data-region="been-l" x="76" y="188" width="22" height="100" rx="10"></rect>
-            <rect class="region" data-region="been-r" x="102" y="188" width="22" height="100" rx="10"></rect>
-            <ellipse class="region" data-region="knie-l" cx="87" cy="240" rx="12" ry="12"></ellipse>
-            <ellipse class="region" data-region="knie-r" cx="113" cy="240" rx="12" ry="12"></ellipse>
-            <ellipse class="region" data-region="voet-l" cx="86" cy="305" rx="11" ry="9"></ellipse>
-            <ellipse class="region" data-region="voet-r" cx="114" cy="305" rx="11" ry="9"></ellipse>
-          </svg>
+        <p class="hint">Tik de plekken aan op voor- en achterkant.</p>
+        <div class="bodymap-grid">
+          <div class="bodymap-col">
+            <div class="bodymap-cap">Voorkant</div>
+            <div class="bodymap-wrap">
+              <svg class="bodymap" id="bodymap-front" viewBox="0 0 200 380" xmlns="http://www.w3.org/2000/svg" aria-label="Lichaamskaart voorkant">
+                <ellipse class="region" data-region="hoofd" cx="100" cy="34" rx="22" ry="26"></ellipse>
+                <rect class="region" data-region="nek" x="91" y="58" width="18" height="13" rx="4"></rect>
+                <rect class="region" data-region="schouder-l" x="54" y="70" width="30" height="15" rx="7"></rect>
+                <rect class="region" data-region="schouder-r" x="116" y="70" width="30" height="15" rx="7"></rect>
+                <rect class="region" data-region="borst" x="72" y="73" width="56" height="40" rx="10"></rect>
+                <rect class="region" data-region="buik" x="74" y="114" width="52" height="46" rx="10"></rect>
+                <rect class="region" data-region="arm-l" x="47" y="74" width="16" height="64" rx="8"></rect>
+                <rect class="region" data-region="arm-r" x="137" y="74" width="16" height="64" rx="8"></rect>
+                <ellipse class="region" data-region="hand-l" cx="55" cy="150" rx="9" ry="11"></ellipse>
+                <ellipse class="region" data-region="hand-r" cx="145" cy="150" rx="9" ry="11"></ellipse>
+                <rect class="region" data-region="heup" x="74" y="161" width="52" height="26" rx="10"></rect>
+                <rect class="region" data-region="been-l" x="76" y="188" width="22" height="100" rx="10"></rect>
+                <rect class="region" data-region="been-r" x="102" y="188" width="22" height="100" rx="10"></rect>
+                <ellipse class="region" data-region="knie-l" cx="87" cy="240" rx="12" ry="12"></ellipse>
+                <ellipse class="region" data-region="knie-r" cx="113" cy="240" rx="12" ry="12"></ellipse>
+                <ellipse class="region" data-region="voet-l" cx="86" cy="305" rx="11" ry="9"></ellipse>
+                <ellipse class="region" data-region="voet-r" cx="114" cy="305" rx="11" ry="9"></ellipse>
+              </svg>
+            </div>
+          </div>
+          <div class="bodymap-col">
+            <div class="bodymap-cap">Achterkant</div>
+            <div class="bodymap-wrap">
+              <svg class="bodymap" id="bodymap-back" viewBox="0 0 200 380" xmlns="http://www.w3.org/2000/svg" aria-label="Lichaamskaart achterkant">
+                <ellipse class="region" data-region="achterhoofd" cx="100" cy="34" rx="22" ry="26"></ellipse>
+                <rect class="region" data-region="nek-achter" x="91" y="58" width="18" height="13" rx="4"></rect>
+                <rect class="region" data-region="schouder-l-achter" x="54" y="70" width="30" height="15" rx="7"></rect>
+                <rect class="region" data-region="schouder-r-achter" x="116" y="70" width="30" height="15" rx="7"></rect>
+                <rect class="region" data-region="bovenrug" x="72" y="73" width="56" height="40" rx="10"></rect>
+                <rect class="region" data-region="onderrug" x="74" y="114" width="52" height="46" rx="10"></rect>
+                <rect class="region" data-region="arm-l-achter" x="47" y="74" width="16" height="64" rx="8"></rect>
+                <rect class="region" data-region="arm-r-achter" x="137" y="74" width="16" height="64" rx="8"></rect>
+                <rect class="region" data-region="bil-l" x="74" y="161" width="26" height="28" rx="9"></rect>
+                <rect class="region" data-region="bil-r" x="100" y="161" width="26" height="28" rx="9"></rect>
+                <rect class="region" data-region="dij-l-achter" x="76" y="190" width="22" height="52" rx="10"></rect>
+                <rect class="region" data-region="dij-r-achter" x="102" y="190" width="22" height="52" rx="10"></rect>
+                <rect class="region" data-region="kuit-l" x="76" y="246" width="22" height="44" rx="10"></rect>
+                <rect class="region" data-region="kuit-r" x="102" y="246" width="22" height="44" rx="10"></rect>
+                <ellipse class="region" data-region="hiel-l" cx="86" cy="305" rx="11" ry="9"></ellipse>
+                <ellipse class="region" data-region="hiel-r" cx="114" cy="305" rx="11" ry="9"></ellipse>
+              </svg>
+            </div>
+          </div>
         </div>
-        <p class="hint" style="margin:8px 0 6px">Rug (niet zichtbaar op voorkant):</p>
-        <div class="region-chips" id="region-chips-extra"></div>
         <p class="locations-text" id="pain-locations-text"></p>
       </div>
 
