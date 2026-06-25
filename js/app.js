@@ -354,7 +354,7 @@ function buildScoreRow(container, field) {
   const note = document.createElement('input');
   note.type = 'text';
   note.className = 'score-note';
-  note.placeholder = '✎';
+  note.placeholder = '✎ Toelichting (optioneel)';
   note.maxLength = 100;
   note.setAttribute('aria-label', 'Toelichting bij dit cijfer');
   note.addEventListener('input', (e) => {

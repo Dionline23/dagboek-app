@@ -383,7 +383,7 @@ main {
 /* Cijfer-knoppen */
 .score-row {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: var(--sp-2);
 }
 
@@ -406,13 +406,14 @@ main {
   box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
-/* Kort toelichtingsveld op de vrije plek rechtsonder (waar voorheen de 10 stond) */
+/* Kort toelichtingsveld onder de cijfers (volle breedte) */
 .score-row .score-note {
+  grid-column: 1 / -1;
   min-width: 0;
   width: 100%;
-  height: 46px;
-  margin: 0;
-  padding: 6px 8px;
+  height: 40px;
+  margin: 2px 0 0;
+  padding: 6px 10px;
   font-size: 15px;
   border: 1px dashed var(--border-strong);
   border-radius: var(--r-md);
