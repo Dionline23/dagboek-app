@@ -40,14 +40,19 @@ function emptyRecord(date) {
     date,
     mood: null,
     morningScore: null,
+    morningScoreNote: '',
     eveningScore: null,
+    eveningScoreNote: '',
     gratitude: ['', '', ''],
     journal: '',
     exerciseMinutes: null,
     habits: {},
     painMorning: null,
+    painMorningNote: '',
     painAfternoon: null,
+    painAfternoonNote: '',
     painEvening: null,
+    painEveningNote: '',
     painLocations: [],
     painNote: '',
     done: {},
@@ -329,6 +334,9 @@ function showUndo(message, onUndo) {
 function buildScoreRow(container, field) {
   const min = Number(container.dataset.min);
   const max = Number(container.dataset.max);
+  const noteField = field + 'Note';
+  container.dataset.field = field;
+  container.dataset.note = noteField;
   container.innerHTML = '';
   for (let v = min; v <= max; v++) {
     const btn = document.createElement('button');
@@ -342,6 +350,18 @@ function buildScoreRow(container, field) {
     });
     container.appendChild(btn);
   }
+  // kort toelichtingsveld op de vrije plek rechtsonder (waar voorheen de 10 stond)
+  const note = document.createElement('input');
+  note.type = 'text';
+  note.className = 'score-note';
+  note.placeholder = '✎';
+  note.maxLength = 100;
+  note.setAttribute('aria-label', 'Toelichting bij dit cijfer');
+  note.addEventListener('input', (e) => {
+    currentRecord[noteField] = e.target.value;
+    scheduleSave();
+  });
+  container.appendChild(note);
 }
 
 // kleur op basis van waarde: 'good' = hoog groen, 'bad' = hoog rood
@@ -355,13 +375,16 @@ function updateScoreRow(container, value) {
   const min = Number(container.dataset.min);
   const max = Number(container.dataset.max);
   const polarity = container.dataset.polarity || 'good';
-  for (const btn of container.children) {
+  for (const btn of container.querySelectorAll('button')) {
     const v = Number(btn.dataset.value);
     const sel = v === value;
     btn.classList.toggle('selected', sel);
     btn.style.background = sel ? scaleColor(v, min, max, polarity) : '';
     btn.style.borderColor = sel ? scaleColor(v, min, max, polarity) : '';
   }
+  // toelichting bij dit cijfer terugzetten
+  const ni = container.querySelector('.score-note');
+  if (ni) ni.value = currentRecord[container.dataset.note] || '';
 }
 
 // ---- Sport-presets ----
