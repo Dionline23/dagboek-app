@@ -287,6 +287,12 @@
       </div>
 
       <div class="card">
+        <h2>🎯 Pijn per plek</h2>
+        <p class="hint">Kies per aangetikte plek het soort pijn en de intensiteit.</p>
+        <div id="pain-fields"></div>
+      </div>
+
+      <div class="card">
         <h2>Afgelopen 14 dagen</h2>
         <div id="pain-recent"></div>
       </div>
@@ -354,6 +360,21 @@
       <div class="card">
         <h2>Pijnscore</h2>
         <canvas id="chart-pain" class="chart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>🔥 Pijn-heatmap</h2>
+        <p class="hint">Roder = vaker aangetikt én een hogere pijnscore.</p>
+        <div class="bodymap-grid">
+          <div class="bodymap-col">
+            <div class="bodymap-cap">Voorkant</div>
+            <div class="bodymap-wrap" id="heat-front"></div>
+          </div>
+          <div class="bodymap-col">
+            <div class="bodymap-cap">Achterkant</div>
+            <div class="bodymap-wrap" id="heat-back"></div>
+          </div>
+        </div>
       </div>
 
       <div class="card">

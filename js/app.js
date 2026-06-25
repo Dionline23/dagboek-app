@@ -54,6 +54,7 @@ function emptyRecord(date) {
     painEvening: null,
     painEveningNote: '',
     painLocations: [],
+    painDetails: {},
     painNote: '',
     done: {},
   };
@@ -255,6 +256,7 @@ async function loadCurrent() {
   if (!currentRecord.gratitude) currentRecord.gratitude = ['', '', ''];
   if (!currentRecord.done) currentRecord.done = {};
   if (!currentRecord.habits) currentRecord.habits = {};
+  if (!currentRecord.painDetails) currentRecord.painDetails = {};
 }
 
 function scheduleSave() {
@@ -592,7 +594,7 @@ const REGION_LABELS = {
 };
 
 function buildBodyMap() {
-  for (const shape of document.querySelectorAll('.bodymap .region')) {
+  for (const shape of document.querySelectorAll('#tab-pijn .bodymap .region')) {
     shape.addEventListener('click', () => toggleRegion(shape.dataset.region));
   }
 }
@@ -603,18 +605,129 @@ function toggleRegion(id) {
   if (i >= 0) locs.splice(i, 1);
   else locs.push(id);
   renderBodyMap();
+  renderPainFields();
   saveNow();
 }
 
 function renderBodyMap() {
   const locs = currentRecord.painLocations || [];
-  for (const shape of document.querySelectorAll('.bodymap .region')) {
+  for (const shape of document.querySelectorAll('#tab-pijn .bodymap .region')) {
     shape.classList.toggle('sel', locs.includes(shape.dataset.region));
   }
   const text = document.getElementById('pain-locations-text');
   text.textContent = locs.length
     ? 'Geselecteerd: ' + locs.map((id) => REGION_LABELS[id] || id).join(', ')
     : 'Nog geen plekken geselecteerd.';
+}
+
+// ---- Pijn per plek: soort + intensiteit ----
+const PAIN_TYPES = [
+  { id: 'scherp', label: 'Scherp' },
+  { id: 'zeurend', label: 'Zeurend' },
+  { id: 'stekend', label: 'Stekend' },
+  { id: 'branderig', label: 'Branderig' },
+  { id: 'zenuw', label: 'Zenuw' },
+];
+
+function painDetail(id) {
+  if (!currentRecord.painDetails) currentRecord.painDetails = {};
+  if (!currentRecord.painDetails[id]) currentRecord.painDetails[id] = { type: null, intensity: null };
+  return currentRecord.painDetails[id];
+}
+
+function renderPainFields() {
+  const wrap = document.getElementById('pain-fields');
+  const locs = currentRecord.painLocations || [];
+  wrap.innerHTML = '';
+  if (!locs.length) {
+    wrap.innerHTML = emptyState('📍', 'Nog geen plek gekozen', 'Tik hierboven een plek aan om soort en intensiteit toe te voegen.');
+    return;
+  }
+  for (const id of locs) {
+    const d = painDetail(id);
+    const block = document.createElement('div');
+    block.className = 'painfield';
+
+    const name = document.createElement('div');
+    name.className = 'pf-name';
+    name.textContent = '📍 ' + (REGION_LABELS[id] || id);
+    block.appendChild(name);
+
+    // soort pijn (tikbare knoppen)
+    const tl = document.createElement('div');
+    tl.className = 'pf-label';
+    tl.textContent = 'Soort pijn';
+    block.appendChild(tl);
+    const types = document.createElement('div');
+    types.className = 'pf-types';
+    const refreshTypes = () => {
+      [...types.children].forEach((x, i) => x.classList.toggle('sel', d.type === PAIN_TYPES[i].id));
+    };
+    for (const t of PAIN_TYPES) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pf-type';
+      b.textContent = t.label;
+      b.addEventListener('click', () => {
+        d.type = d.type === t.id ? null : t.id;
+        refreshTypes();
+        saveNow();
+      });
+      types.appendChild(b);
+    }
+    refreshTypes();
+    block.appendChild(types);
+
+    // intensiteit (tikbare 1-10 + fijnafstelling 0,1)
+    const il = document.createElement('div');
+    il.className = 'pf-label';
+    il.innerHTML = 'Intensiteit <b class="pf-val"></b>';
+    block.appendChild(il);
+    const valEl = il.querySelector('.pf-val');
+    const setVal = () => { valEl.textContent = d.intensity == null ? '–' : String(Math.round(d.intensity * 10) / 10).replace('.', ','); };
+
+    const scale = document.createElement('div');
+    scale.className = 'pf-scale';
+    const refreshScale = () => {
+      for (const b of scale.children) {
+        const v = Number(b.dataset.value);
+        const sel = d.intensity != null && Math.round(d.intensity) === v;
+        b.classList.toggle('sel', sel);
+        b.style.background = sel ? scaleColor(v, 1, 10, 'bad') : '';
+        b.style.borderColor = sel ? scaleColor(v, 1, 10, 'bad') : '';
+      }
+    };
+    for (let v = 1; v <= 10; v++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = v;
+      b.dataset.value = v;
+      b.addEventListener('click', () => { d.intensity = v; refreshScale(); setVal(); saveNow(); });
+      scale.appendChild(b);
+    }
+    block.appendChild(scale);
+
+    const fine = document.createElement('div');
+    fine.className = 'pf-fine';
+    const adj = (delta) => {
+      let v = d.intensity == null ? 1 : d.intensity + delta;
+      v = Math.min(10, Math.max(1, Math.round(v * 10) / 10));
+      d.intensity = v;
+      refreshScale(); setVal(); saveNow();
+    };
+    const minus = document.createElement('button');
+    minus.type = 'button'; minus.textContent = '− 0,1';
+    minus.addEventListener('click', () => adj(-0.1));
+    const plus = document.createElement('button');
+    plus.type = 'button'; plus.textContent = '+ 0,1';
+    plus.addEventListener('click', () => adj(0.1));
+    fine.appendChild(minus); fine.appendChild(plus);
+    block.appendChild(fine);
+
+    refreshScale();
+    setVal();
+    wrap.appendChild(block);
+  }
 }
 
 function painColorWidth(score) {
@@ -634,6 +747,7 @@ async function renderPijn() {
   updateScoreRow(document.getElementById('pain-evening'), currentRecord.painEvening);
   document.getElementById('pain-note').value = currentRecord.painNote || '';
   renderBodyMap();
+  renderPainFields();
   renderDone();
 
   const wrap = document.getElementById('pain-recent');
@@ -953,6 +1067,49 @@ function renderBestWorst(all) {
   }
 }
 
+// ---- Pijn-heatmap (voor- en achterkant) ----
+function heatColor(r) {
+  r = Math.max(0, Math.min(1, r));
+  const a = [246, 221, 216]; // zacht roze
+  const b = [178, 38, 30];   // diep rood
+  const c = a.map((s, i) => Math.round(s + (b[i] - s) * r));
+  return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+}
+
+function renderPainHeatmap(all) {
+  // heat = som van pijnintensiteit per plek over alle dagen
+  // (vaker aangetikt → meer optellingen, hoger cijfer → grotere optelling)
+  const heat = {};
+  for (const day of all) {
+    const locs = day.painLocations || [];
+    const details = day.painDetails || {};
+    const fb = painRepresentative(day);
+    for (const id of locs) {
+      const det = details[id];
+      const inten = det && det.intensity != null ? det.intensity : (fb != null ? fb : 5);
+      heat[id] = (heat[id] || 0) + inten;
+    }
+  }
+  let max = 0;
+  for (const k in heat) if (heat[k] > max) max = heat[k];
+
+  for (const [srcId, dstId] of [['bodymap-front', 'heat-front'], ['bodymap-back', 'heat-back']]) {
+    const src = document.getElementById(srcId);
+    const dst = document.getElementById(dstId);
+    if (!src || !dst) continue;
+    const clone = src.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.classList.add('heatmap');
+    for (const sh of clone.querySelectorAll('.region')) {
+      sh.classList.remove('sel');
+      const h = heat[sh.dataset.region] || 0;
+      sh.style.fill = (h > 0 && max > 0) ? heatColor(h / max) : 'var(--surface-2)';
+      sh.style.stroke = 'var(--border)';
+    }
+    dst.replaceChildren(clone);
+  }
+}
+
 async function renderInzichten() {
   const all = await dbGetAllDays();
   const byDate = new Map(all.map((r) => [r.date, r]));
@@ -960,6 +1117,7 @@ async function renderInzichten() {
   weekStats(byDate, today);
   renderSmartInsights(all);
   renderBestWorst(all);
+  renderPainHeatmap(all);
   const dates = [];
   for (let i = insightDays - 1; i >= 0; i--) dates.push(addDays(today, -i));
 

@@ -929,6 +929,53 @@ button.tag-chip.clickable { cursor: pointer; }
   transition: fill 0.12s;
 }
 .bodymap .region.sel { fill: #e8788f; stroke: #d3667c; }
+.heatmap .region { cursor: default; }
+
+/* Pijn per plek (soort + intensiteit) */
+.painfield {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  padding: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+.pf-name { font-weight: 700; margin-bottom: var(--sp-1); }
+.pf-label { font-size: var(--fs-sm); color: var(--text-muted); margin: var(--sp-3) 0 var(--sp-2); }
+.pf-label .pf-val { color: var(--text); font-weight: 800; }
+.pf-types { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.pf-type {
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  padding: 7px 13px;
+  cursor: pointer;
+}
+.pf-type.sel { background: var(--pain); border-color: var(--pain); color: #fff; }
+.pf-scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--sp-2); }
+.pf-scale button {
+  height: 40px; min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+.pf-scale button.sel { color: #fff; }
+.pf-fine { display: flex; gap: var(--sp-2); margin-top: var(--sp-2); }
+.pf-fine button {
+  flex: 1; height: 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
 
 .region-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .region-chip {
