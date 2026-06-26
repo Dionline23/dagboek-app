@@ -9,7 +9,9 @@ async function exportBackup() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `dagboek-backup-${todayStr()}.json`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 }
 
@@ -18,7 +20,9 @@ function downloadBlob(content, filename, type) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = filename;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 }
 
@@ -31,14 +35,12 @@ function csvEscape(s) {
 async function exportCsv() {
   const days = await dbGetAllDays();
   days.sort((a, b) => a.date.localeCompare(b.date));
-  const cols = ['datum', 'stemming', 'ochtend', 'avond', 'pijn', 'slaap_uren', 'slaap_kwaliteit',
-    'energie', 'water', 'gewicht', 'stappen', 'sport_min', 'dankbaarheid', 'journal'];
+  const cols = ['datum', 'stemming', 'ochtend', 'avond', 'pijn', 'sport_min', 'dankbaarheid', 'journal'];
   const lines = [cols.join(';')];
   for (const d of days) {
     const pain = painRepresentative(d);
     const row = [d.date, d.mood ?? '', d.morningScore ?? '', d.eveningScore ?? '',
-      pain == null ? '' : Math.round(pain * 10) / 10, d.sleepHours ?? '', d.sleepQuality ?? '',
-      d.energy ?? '', d.water ?? '', d.weight ?? '', d.steps ?? '', d.exerciseMinutes ?? '',
+      pain == null ? '' : Math.round(pain * 10) / 10, d.exerciseMinutes ?? '',
       (d.gratitude || []).filter(Boolean).join(' | '), (d.journal || '').replace(/\n/g, ' ')];
     lines.push(row.map(csvEscape).join(';'));
   }

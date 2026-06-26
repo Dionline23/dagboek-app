@@ -167,7 +167,9 @@ async function renderOnThisDay() {
 }
 
 function monthsAgo(y, m, d, n) {
-  const dt = new Date(y, m - 1 - n, d);
+  const targetMonth = m - 1 - n;
+  const lastDay = new Date(y, targetMonth + 1, 0).getDate();
+  const dt = new Date(y, targetMonth, Math.min(d, lastDay));
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 }
 
@@ -217,7 +219,7 @@ async function renderMissedPrompt() {
 }
 
 // ---- "Klaar"-afvinkknoppen per onderdeel ----
-const TODAY_DONE_KEYS = ['morning', 'evening', 'gratitude', 'journal', 'exercise'];
+const TODAY_DONE_KEYS = ['morning', 'evening', 'gratitude', 'journal', 'exercise', 'pain'];
 
 function toggleDone(key) {
   if (!currentRecord.done) currentRecord.done = {};
@@ -266,8 +268,12 @@ function scheduleSave() {
 
 async function saveNow(silent = false) {
   clearTimeout(saveTimer);
-  await dbPutDay(currentRecord);
-  if (!silent) showToast('Opgeslagen ✓');
+  try {
+    await dbPutDay(currentRecord);
+    if (!silent) showToast('Opgeslagen ✓');
+  } catch (err) {
+    showToast('Opslaan mislukt ✗');
+  }
 }
 
 // ---- "Opgeslagen"-toast ----
@@ -305,8 +311,11 @@ function confirmDialog({ title = 'Bevestigen', message = '', confirmText = 'Oké
     const cleanup = (val) => {
       ov.classList.add('hidden');
       c.onclick = null; cancel.onclick = null; ov.onclick = null;
+      document.removeEventListener('keydown', onKey);
       resolve(val);
     };
+    const onKey = (e) => { if (e.key === 'Escape') cleanup(false); };
+    document.addEventListener('keydown', onKey);
     c.onclick = () => cleanup(true);
     cancel.onclick = () => cleanup(false);
     ov.onclick = (e) => { if (e.target === ov) cleanup(false); };
@@ -571,8 +580,8 @@ async function renderVandaag() {
   renderExercise();
   renderHabits();
   renderDone();
-  renderMissedPrompt();
-  renderOnThisDay();
+  renderMissedPrompt().catch(console.error);
+  renderOnThisDay().catch(console.error);
 }
 
 // ---- Tab: Pijn ----
@@ -1044,6 +1053,8 @@ function renderBestWorst(all) {
 }
 
 // ---- Pijn-heatmap (voor- en achterkant) ----
+let lastHeatHash = null;
+
 function heatColor(r) {
   r = Math.max(0, Math.min(1, r));
   const a = [246, 221, 216]; // zacht roze
@@ -1053,8 +1064,6 @@ function heatColor(r) {
 }
 
 function renderPainHeatmap(all) {
-  // heat = som van pijnintensiteit per plek over alle dagen
-  // (vaker aangetikt → meer optellingen, hoger cijfer → grotere optelling)
   const heat = {};
   for (const day of all) {
     const locs = day.painLocations || [];
@@ -1066,6 +1075,10 @@ function renderPainHeatmap(all) {
       heat[id] = (heat[id] || 0) + inten;
     }
   }
+  const heatHash = JSON.stringify(heat);
+  if (heatHash === lastHeatHash) return;
+  lastHeatHash = heatHash;
+
   let max = 0;
   for (const k in heat) if (heat[k] > max) max = heat[k];
 
@@ -1268,9 +1281,7 @@ function setTheme(theme) {
 }
 
 function initThemeUI() {
-  const cur = getTheme();
-  document.documentElement.dataset.theme = cur;
-  setTheme(cur);
+  setTheme(getTheme());
   document.getElementById('theme-segment').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
@@ -1403,7 +1414,11 @@ async function init() {
     if (target) openDate(target);
   });
 
-  document.getElementById('history-search').addEventListener('input', () => renderGeschiedenis());
+  let searchTimer = null;
+  document.getElementById('history-search').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => renderGeschiedenis(), 300);
+  });
   document.getElementById('history-filter-clear').addEventListener('click', () => setTagFilter(null));
   document.getElementById('cal-prev').addEventListener('click', () => {
     calMonth.m--; if (calMonth.m < 0) { calMonth.m = 11; calMonth.y--; }
@@ -1508,6 +1523,8 @@ async function init() {
   });
 
   await loadCurrent();
+  const initStreak = await computeStreak();
+  streakText = initStreak >= 2 ? `🔥 ${initStreak} dagen op rij` : initStreak === 1 ? '🔥 1 dag' : '';
   switchTab('vandaag');
 
   // onboarding bij eerste gebruik
