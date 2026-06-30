@@ -930,6 +930,13 @@ button.tag-chip.clickable { cursor: pointer; }
 }
 .bodymap .region.sel { fill: #e8788f; stroke: #d3667c; }
 .heatmap .region { cursor: default; }
+.body-silhouette {
+  fill: color-mix(in srgb, var(--accent) 14%, var(--card));
+  stroke: color-mix(in srgb, var(--accent) 45%, var(--border));
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
 
 /* Pijn per plek (soort + intensiteit) */
 .painfield {
