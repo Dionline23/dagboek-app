@@ -10,6 +10,7 @@ function matchesSearch(rec, term) {
   if (!term) return true;
   const haystack = [
     rec.journal || '',
+    rec.bigEvent || '',
     (rec.gratitude || []).join(' '),
     rec.painNote || '',
     formatDate(rec.date),
@@ -132,7 +133,10 @@ export async function renderGeschiedenis() {
     if (pr != null) badges.push(`🩹 ${String(Math.round(pr * 10) / 10).replace('.', ',')}`);
     if (rec.exerciseMinutes != null && rec.exerciseMinutes > 0) badges.push(`🏃 ${rec.exerciseMinutes}m`);
 
+    if (rec.bigEvent && rec.bigEvent.trim()) badges.push('🌟');
+
     const summaryParts = [];
+    if (rec.bigEvent && rec.bigEvent.trim()) summaryParts.push('🌟 ' + rec.bigEvent.trim());
     if (rec.journal) summaryParts.push(rec.journal.slice(0, 60) + (rec.journal.length > 60 ? '…' : ''));
     else if ((rec.gratitude || []).some((g) => g)) summaryParts.push('Dankbaarheid ingevuld');
 

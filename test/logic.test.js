@@ -76,6 +76,33 @@ test('normalizeDay vult defaults zonder bestaande data te wissen', () => {
   assert.equal(L.normalizeDay({ date: '2026-06-03', habits }).habits, habits);
 });
 
+test('normalizeDay en sanitizeDay behandelen bigEvent', () => {
+  assert.equal(L.normalizeDay({ date: '2026-06-01' }).bigEvent, '');
+  assert.equal(L.normalizeDay({ date: '2026-06-01', bigEvent: 'Zoon geboren' }).bigEvent, 'Zoon geboren');
+  assert.equal(L.sanitizeDay({ date: '2026-06-01', bigEvent: 123 }).bigEvent, '123');
+});
+
+test('hasContent telt een dag met alleen een Big Event mee', () => {
+  assert.equal(L.hasContent({ bigEvent: 'Verhuisd' }), true);
+  assert.equal(L.hasContent({ bigEvent: '   ' }), false);
+});
+
+test('computeRegionStats aggregeert per lichaamsregio', () => {
+  const all = [
+    { date: '2026-06-01', painLocations: ['nek'], painDetails: { nek: { type: 'zeurend', intensity: 4 } } },
+    { date: '2026-06-03', painLocations: ['nek', 'onderrug'], painDetails: { nek: { type: 'zeurend', intensity: 8 }, onderrug: { type: 'scherp', intensity: 6 } } },
+    { date: '2026-06-02', painLocations: ['nek'], painDetails: { nek: { type: 'scherp', intensity: 6 } } },
+  ];
+  const s = L.computeRegionStats(all);
+  assert.equal(s.nek.days, 3);
+  assert.equal(s.nek.max, 8);
+  assert.equal(s.nek.avg, 6);          // (4+8+6)/3
+  assert.equal(s.nek.topType, 'zeurend'); // 2x zeurend vs 1x scherp
+  assert.equal(s.nek.last, '2026-06-03');
+  assert.equal(s.onderrug.days, 1);
+  assert.equal(s.arm, undefined);       // nooit aangetikt
+});
+
 test('sanitizeDay strandt HTML/ongeldige waarden en dwingt types af', () => {
   const dirty = {
     date: '2026-06-01',

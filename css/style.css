@@ -931,7 +931,27 @@ button.tag-chip.clickable { cursor: pointer; }
 .bodymap .region.sel { fill: #e8788f; stroke: #d3667c; }
 /* duidelijke focusindicator bij toetsenbordbediening (outline rendert niet altijd op SVG) */
 .bodymap .region:focus-visible { stroke: var(--accent); stroke-width: 2.5; outline: none; }
-.heatmap .region { cursor: default; }
+/* heatmap-regio's zijn aantikbaar voor statistiek per plek */
+.heatmap .region { cursor: pointer; }
+.heatmap .region.active { stroke: var(--accent); stroke-width: 2.5; }
+
+/* Statistiekpaneel onder de heatmap */
+.heat-stats:empty { display: none; }
+.heat-stats { margin-top: var(--sp-3); }
+.hs-title { font-weight: 700; margin-bottom: var(--sp-2); }
+.hs-empty { color: var(--text-muted); font-size: var(--fs-sm); }
+.hs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: var(--sp-2); }
+.hs-cell {
+  background: var(--surface-2);
+  border-radius: var(--r-md);
+  padding: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+}
+.hs-v { font-size: var(--fs-h2); font-weight: 700; color: var(--text); }
+.hs-k { font-size: var(--fs-caption); color: var(--text-muted); }
 .body-silhouette {
   fill: color-mix(in srgb, var(--accent) 14%, var(--card));
   stroke: color-mix(in srgb, var(--accent) 45%, var(--border));

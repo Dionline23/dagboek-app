@@ -167,6 +167,12 @@
         <div class="tag-chips" id="journal-tags"></div>
       </div>
 
+      <div class="card" id="bigevent-card">
+        <h2>🌟 Big Event</h2>
+        <p class="hint">Iets groots in je leven? (bijv. de geboorte van je kind). Alleen invullen als er echt iets is — later zie je in Inzichten de nasleep hiervan.</p>
+        <input type="text" id="bigevent" maxlength="120" placeholder="Bijv. Zoon geboren 🎉">
+      </div>
+
       <div class="card" id="writehelp-card">
         <div class="card-head">
           <h2>💡 Schrijfhulp</h2>
@@ -299,8 +305,9 @@
         <div class="period-row">
           <h2>📈 Periode</h2>
           <div class="segment" id="period-segment">
-            <button data-days="30" class="active">30 dagen</button>
-            <button data-days="90">90 dagen</button>
+            <button data-days="7">Week</button>
+            <button data-days="30" class="active">Maand</button>
+            <button data-days="90">3 mnd</button>
           </div>
         </div>
       </div>
@@ -321,7 +328,7 @@
 
       <div class="card">
         <h2>🔥 Pijn-heatmap</h2>
-        <p class="hint">Roder = vaker aangetikt én een hogere pijnscore.</p>
+        <p class="hint">Roder = vaker aangetikt én een hogere pijnscore. Tik een plek aan voor de cijfers.</p>
         <div class="bodymap-grid">
           <div class="bodymap-col">
             <div class="bodymap-cap">Voorkant</div>
@@ -332,6 +339,7 @@
             <div class="bodymap-wrap" id="heat-back"></div>
           </div>
         </div>
+        <div id="heat-stats" class="heat-stats"></div>
       </div>
 
       <div class="card">

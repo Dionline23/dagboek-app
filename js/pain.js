@@ -6,7 +6,7 @@ import {
 import { todayStr, addDays, formatDate, painRepresentative } from './logic.js';
 import { dbGetDay } from './db.js';
 import { renderDone } from './today.js';
-import { REGION_LABELS, buildBodyMaps } from './bodymap.js';
+import { REGION_LABELS, PAIN_TYPES, buildBodyMaps } from './bodymap.js';
 
 // ---- Lichaamskaart ----
 export function initBodyMap() {
@@ -46,15 +46,7 @@ function renderBodyMap() {
     : 'Nog geen plekken geselecteerd.';
 }
 
-// ---- Pijn per plek: soort + intensiteit ----
-const PAIN_TYPES = [
-  { id: 'scherp', label: 'Scherp' },
-  { id: 'zeurend', label: 'Zeurend' },
-  { id: 'stekend', label: 'Stekend' },
-  { id: 'branderig', label: 'Branderig' },
-  { id: 'zenuw', label: 'Zenuw' },
-];
-
+// ---- Pijn per plek: soort + intensiteit (PAIN_TYPES staat in js/bodymap.js) ----
 function painDetail(id) {
   if (!currentRecord.painDetails) currentRecord.painDetails = {};
   if (!currentRecord.painDetails[id]) currentRecord.painDetails[id] = { type: null, intensity: null };

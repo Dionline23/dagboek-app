@@ -314,6 +314,14 @@ export function initJournalInput() {
   });
 }
 
+// ---- Big Event (grote gebeurtenis; optioneel) ----
+export function initBigEvent() {
+  document.getElementById('bigevent').addEventListener('input', (e) => {
+    currentRecord.bigEvent = e.target.value;
+    scheduleSave();
+  });
+}
+
 // ---- Gewoontes (aanpasbaar) ----
 function getHabits() {
   try { return JSON.parse(localStorage.getItem(LS.habits)) || []; } catch { return []; }
@@ -415,6 +423,7 @@ export async function renderVandaag() {
   renderGratitude();
   document.getElementById('journal').value = currentRecord.journal || '';
   renderJournalTags();
+  document.getElementById('bigevent').value = currentRecord.bigEvent || '';
   renderExercise();
   renderHabits();
   renderDone();

@@ -53,6 +53,7 @@ function hasContent(r) {
     painRepresentative(r) != null || r.exerciseMinutes != null ||
     Object.values(r.habits || {}).some(Boolean) ||
     (r.painLocations || []).length > 0 || (r.journal || '').trim() !== '' ||
+    (r.bigEvent || '').trim() !== '' ||
     (r.gratitude || []).some((g) => g && g.trim() !== '');
 }
 
@@ -71,6 +72,7 @@ function normalizeDay(r) {
     eveningScoreNote: r.eveningScoreNote ?? '',
     gratitude: Array.isArray(r.gratitude) ? r.gratitude : ['', '', ''],
     journal: r.journal ?? '',
+    bigEvent: r.bigEvent ?? '',
     exerciseMinutes: r.exerciseMinutes ?? null,
     habits: (r.habits && typeof r.habits === 'object') ? r.habits : {},
     painMorning: r.painMorning ?? null,
@@ -86,6 +88,40 @@ function normalizeDay(r) {
   };
   if (r.painScore != null) clean.painScore = r.painScore; // legacy losse pijnscore
   return clean;
+}
+
+// ---- Pijn-statistiek per lichaamsregio (over alle dagen) ----
+// Per plek: aantal dagen aangetikt, gemiddelde/hoogste intensiteit, meest
+// voorkomend soort pijn en de laatste datum. Pure functie → testbaar.
+function computeRegionStats(all) {
+  const stats = {};
+  for (const day of all) {
+    const locs = day.painLocations || [];
+    const details = day.painDetails || {};
+    const fb = painRepresentative(day);
+    for (const id of locs) {
+      const s = stats[id] || (stats[id] = { region: id, days: 0, sum: 0, count: 0, max: 0, types: {}, last: null });
+      s.days++;
+      const det = details[id];
+      const inten = det && det.intensity != null ? det.intensity : (fb != null ? fb : null);
+      if (inten != null) {
+        s.sum += inten;
+        s.count++;
+        if (inten > s.max) s.max = inten;
+      }
+      const type = det && det.type ? det.type : null;
+      if (type) s.types[type] = (s.types[type] || 0) + 1;
+      if (!s.last || day.date > s.last) s.last = day.date;
+    }
+  }
+  for (const id in stats) {
+    const s = stats[id];
+    s.avg = s.count ? s.sum / s.count : null;
+    let top = null, topN = 0;
+    for (const t in s.types) if (s.types[t] > topN) { topN = s.types[t]; top = t; }
+    s.topType = top;
+  }
+  return stats;
 }
 
 // ---- Journal #tags ----
@@ -131,6 +167,7 @@ function sanitizeDay(day) {
     eveningScoreNote: importStr(day.eveningScoreNote),
     gratitude: Array.isArray(day.gratitude) ? day.gratitude.map(importStr) : [],
     journal: importStr(day.journal),
+    bigEvent: importStr(day.bigEvent),
     exerciseMinutes: importNum(day.exerciseMinutes, 0, 1440),
     habits: importBoolMap(day.habits),
     painMorning: importNum(day.painMorning, 0, 10),
@@ -167,6 +204,6 @@ function sanitizeDay(day) {
 export {
   DAGEN, MAANDEN,
   toISODate, todayStr, addDays, monthsAgo, formatDate, relativeDayLabel,
-  painRepresentative, hasContent, extractTags, normalizeDay,
+  painRepresentative, hasContent, extractTags, normalizeDay, computeRegionStats,
   importNum, importStr, importBoolMap, sanitizeDay,
 };

@@ -32,6 +32,11 @@ function drawLineChart(canvas, series, opts) {
   const yFor = (v) => pad.top + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
   const idxByDate = new Map(dates.map((d, i) => [d, i]));
 
+  // Big Event-markeringen (verticale lijn + tooltiptekst op die datum)
+  const eventByDate = new Map(
+    (opts.events || []).filter((e) => idxByDate.has(e.date)).map((e) => [e.date, e.text]));
+  const EVENT_COLOR = '#b98bd9';
+
   // Bereken pts per serie
   const allSeriesPts = series.map((s) => {
     const raw = s.points.filter((p) => p.value != null && idxByDate.has(p.date));
@@ -71,6 +76,25 @@ function drawLineChart(canvas, series, opts) {
       ctx.textAlign = i === 0 ? 'left' : i === dates.length - 1 ? 'right' : 'center';
       ctx.fillStyle = textColor;
       ctx.fillText(`${d}-${m}`, xFor(i), pad.top + plotH + 6);
+    }
+
+    // Big Event-markeringen: subtiele verticale lijn + stip bovenaan
+    for (const date of eventByDate.keys()) {
+      const ex = xFor(idxByDate.get(date));
+      ctx.save();
+      ctx.strokeStyle = hexToRgba(EVENT_COLOR, 0.55);
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 3]);
+      ctx.beginPath();
+      ctx.moveTo(ex, pad.top);
+      ctx.lineTo(ex, pad.top + plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = EVENT_COLOR;
+      ctx.beginPath();
+      ctx.arc(ex, pad.top + 2, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
     const fillArea = series.length === 1;
@@ -156,6 +180,9 @@ function drawLineChart(canvas, series, opts) {
       const tooltipLines = [];
       const [, hm, hd] = hDate.split('-');
       tooltipLines.push({ text: `${hd}-${hm}`, color: textColor });
+
+      const ev = eventByDate.get(hDate);
+      if (ev) tooltipLines.push({ text: '🌟 ' + (ev.length > 32 ? ev.slice(0, 31) + '…' : ev), color: EVENT_COLOR });
 
       for (const { s, pts } of allSeriesPts) {
         const p = pts.find((pt) => pt.date === hDate);
