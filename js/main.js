@@ -12,7 +12,7 @@ import {
 } from './today.js';
 import { initBodyMap, renderPijn } from './pain.js';
 import { renderGeschiedenis, setTagFilter, calPrevMonth, calNextMonth } from './history.js';
-import { renderInzichten, setInsightPeriod } from './insights.js';
+import { renderInzichten, setInsightMode } from './insights.js';
 import {
   initThemeUI, initPinUI, initGoalUI, openLockScreen, isPinSet,
   showUpdateBanner, applyUpdate,
@@ -84,7 +84,7 @@ async function init() {
     for (const b of document.querySelectorAll('#period-segment button')) {
       b.classList.toggle('active', b === btn);
     }
-    setInsightPeriod(Number(btn.dataset.days));
+    setInsightMode(btn.dataset.mode);
   });
 
   // back-up

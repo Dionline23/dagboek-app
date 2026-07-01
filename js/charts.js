@@ -20,6 +20,11 @@ function drawLineChart(canvas, series, opts) {
   const plotH = cssHeight - pad.top - pad.bottom;
 
   const dates = opts.dates;
+  // Weergavelabels per x-positie (bv. weeknr/maand); anders dd-mm uit de datum.
+  const labels = opts.labels || dates.map((d) => {
+    const [, m, dd] = d.split('-');
+    return `${dd}-${m}`;
+  });
   let yMin = opts.yMin != null ? opts.yMin : 0;
   let yMax = opts.yMax;
   if (yMax == null) {
@@ -72,10 +77,9 @@ function drawLineChart(canvas, series, opts) {
     const labelIdx = dates.length <= 2 ? dates.map((_, i) => i)
       : [0, Math.floor((dates.length - 1) / 2), dates.length - 1];
     for (const i of labelIdx) {
-      const [, m, d] = dates[i].split('-');
       ctx.textAlign = i === 0 ? 'left' : i === dates.length - 1 ? 'right' : 'center';
       ctx.fillStyle = textColor;
-      ctx.fillText(`${d}-${m}`, xFor(i), pad.top + plotH + 6);
+      ctx.fillText(labels[i], xFor(i), pad.top + plotH + 6);
     }
 
     // Big Event-markeringen: subtiele verticale lijn + stip bovenaan
@@ -178,8 +182,7 @@ function drawLineChart(canvas, series, opts) {
 
       // Punt highlight + tooltip tekst
       const tooltipLines = [];
-      const [, hm, hd] = hDate.split('-');
-      tooltipLines.push({ text: `${hd}-${hm}`, color: textColor });
+      tooltipLines.push({ text: labels[nearIdx], color: textColor });
 
       const ev = eventByDate.get(hDate);
       if (ev) tooltipLines.push({ text: '🌟 ' + (ev.length > 32 ? ev.slice(0, 31) + '…' : ev), color: EVENT_COLOR });

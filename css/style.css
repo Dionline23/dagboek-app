@@ -437,6 +437,15 @@ input[type="search"], input[type="password"], input[type="time"], textarea {
 ::placeholder { color: var(--text-muted); opacity: 0.85; }
 
 textarea { resize: vertical; margin-bottom: 0; }
+/* Journal-textarea staat direct onder de kop (geen hint-tekst) → wat lucht geven */
+#journal { margin-top: var(--sp-3); }
+
+/* Big Event: + toevoegen, invulformulier en opgeslagen weergave */
+.bigevent-display { display: flex; flex-direction: column; gap: var(--sp-2); }
+#bigevent-text { font-weight: 600; }
+.bigevent-form { display: flex; flex-direction: column; gap: var(--sp-2); }
+.bigevent-form input { margin-bottom: 0; }
+.bigevent-actions { display: flex; gap: var(--sp-2); justify-content: flex-end; }
 input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
 /* Sport-presets */

@@ -90,6 +90,49 @@ function normalizeDay(r) {
   return clean;
 }
 
+// ---- Grafiek-groepering: buckets per dag/week/maand ----
+function ddmmLabel(dateStr) {
+  const [, m, d] = dateStr.split('-');
+  return `${d}-${m}`;
+}
+
+function mondayOf(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dow = (new Date(y, m - 1, d).getDay() + 6) % 7; // maandag = 0
+  return addDays(dateStr, -dow);
+}
+
+// Bouwt de x-as-buckets voor de gekozen groepering. Elk bucket heeft een
+// sleutel, een label en de dagen (ISO) die erin vallen — voor het gemiddelde.
+function bucketsFor(mode, today) {
+  const out = [];
+  if (mode === 'week') {
+    const monday = mondayOf(today);
+    for (let i = 51; i >= 0; i--) {
+      const start = addDays(monday, -7 * i);
+      const days = [];
+      for (let k = 0; k < 7; k++) days.push(addDays(start, k));
+      out.push({ key: start, label: ddmmLabel(start), days });
+    }
+  } else if (mode === 'month') {
+    const [y, m] = today.split('-').map(Number);
+    for (let i = 11; i >= 0; i--) {
+      const dt = new Date(y, m - 1 - i, 1);
+      const yy = dt.getFullYear(), mm = dt.getMonth();
+      const dim = new Date(yy, mm + 1, 0).getDate();
+      const days = [];
+      for (let d = 1; d <= dim; d++) days.push(toISODate(new Date(yy, mm, d)));
+      out.push({ key: `${yy}-${String(mm + 1).padStart(2, '0')}`, label: MAANDEN[mm].slice(0, 3), days });
+    }
+  } else { // day
+    for (let i = 29; i >= 0; i--) {
+      const d = addDays(today, -i);
+      out.push({ key: d, label: ddmmLabel(d), days: [d] });
+    }
+  }
+  return out;
+}
+
 // ---- Pijn-statistiek per lichaamsregio (over alle dagen) ----
 // Per plek: aantal dagen aangetikt, gemiddelde/hoogste intensiteit, meest
 // voorkomend soort pijn en de laatste datum. Pure functie → testbaar.
@@ -205,5 +248,6 @@ export {
   DAGEN, MAANDEN,
   toISODate, todayStr, addDays, monthsAgo, formatDate, relativeDayLabel,
   painRepresentative, hasContent, extractTags, normalizeDay, computeRegionStats,
+  mondayOf, bucketsFor,
   importNum, importStr, importBoolMap, sanitizeDay,
 };

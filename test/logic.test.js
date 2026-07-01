@@ -103,6 +103,39 @@ test('computeRegionStats aggregeert per lichaamsregio', () => {
   assert.equal(s.arm, undefined);       // nooit aangetikt
 });
 
+test('mondayOf geeft de maandag van de week', () => {
+  assert.equal(L.mondayOf('2026-07-01'), '2026-06-29'); // wo 1 juli → ma 29 juni
+  assert.equal(L.mondayOf('2026-06-29'), '2026-06-29'); // maandag zelf
+  assert.equal(L.mondayOf('2026-07-05'), '2026-06-29'); // zondag → zelfde maandag
+});
+
+test('bucketsFor(day) geeft 30 losse dagen eindigend op vandaag', () => {
+  const b = L.bucketsFor('day', '2026-07-01');
+  assert.equal(b.length, 30);
+  assert.equal(b[29].key, '2026-07-01');
+  assert.equal(b[29].days.length, 1);
+  assert.equal(b[0].key, '2026-06-02');
+});
+
+test('bucketsFor(week) geeft 52 weken van 7 dagen, laatste bevat vandaag', () => {
+  const b = L.bucketsFor('week', '2026-07-01');
+  assert.equal(b.length, 52);
+  assert.equal(b[51].key, '2026-06-29');
+  assert.equal(b[51].days.length, 7);
+  assert.ok(b[51].days.includes('2026-07-01'));
+});
+
+test('bucketsFor(month) geeft 12 maanden met juiste dag-aantallen en labels', () => {
+  const b = L.bucketsFor('month', '2026-07-01');
+  assert.equal(b.length, 12);
+  assert.equal(b[11].key, '2026-07');
+  assert.equal(b[11].label, 'jul');
+  assert.equal(b[11].days.length, 31);        // juli
+  assert.equal(b[0].key, '2025-08');
+  const feb = b.find((x) => x.key === '2026-02');
+  assert.equal(feb.days.length, 28);          // 2026 geen schrikkeljaar
+});
+
 test('sanitizeDay strandt HTML/ongeldige waarden en dwingt types af', () => {
   const dirty = {
     date: '2026-06-01',

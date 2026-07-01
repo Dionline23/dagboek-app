@@ -314,11 +314,47 @@ export function initJournalInput() {
   });
 }
 
-// ---- Big Event (grote gebeurtenis; optioneel) ----
+// ---- Big Event (grote gebeurtenis; optioneel, met + en bevestigen) ----
+function renderBigEvent() {
+  const val = (currentRecord.bigEvent || '').trim();
+  document.getElementById('bigevent-form').classList.add('hidden');
+  const display = document.getElementById('bigevent-display');
+  const addBtn = document.getElementById('bigevent-add');
+  if (val) {
+    document.getElementById('bigevent-text').textContent = '🌟 ' + val;
+    display.classList.remove('hidden');
+    addBtn.classList.add('hidden');
+  } else {
+    display.classList.add('hidden');
+    addBtn.classList.remove('hidden');
+  }
+}
+
+function openBigEventForm() {
+  const input = document.getElementById('bigevent');
+  input.value = currentRecord.bigEvent || '';
+  document.getElementById('bigevent-display').classList.add('hidden');
+  document.getElementById('bigevent-add').classList.add('hidden');
+  document.getElementById('bigevent-form').classList.remove('hidden');
+  input.focus();
+}
+
 export function initBigEvent() {
-  document.getElementById('bigevent').addEventListener('input', (e) => {
-    currentRecord.bigEvent = e.target.value;
-    scheduleSave();
+  document.getElementById('bigevent-add').addEventListener('click', openBigEventForm);
+  document.getElementById('bigevent-edit').addEventListener('click', openBigEventForm);
+  document.getElementById('bigevent-cancel').addEventListener('click', renderBigEvent);
+  document.getElementById('bigevent-save').addEventListener('click', () => {
+    currentRecord.bigEvent = document.getElementById('bigevent').value.trim();
+    saveNow(); // expliciet bevestigen → toon "Opgeslagen ✓"
+    renderBigEvent();
+  });
+  document.getElementById('bigevent-remove').addEventListener('click', () => {
+    currentRecord.bigEvent = '';
+    saveNow();
+    renderBigEvent();
+  });
+  document.getElementById('bigevent').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('bigevent-save').click(); }
   });
 }
 
@@ -423,7 +459,7 @@ export async function renderVandaag() {
   renderGratitude();
   document.getElementById('journal').value = currentRecord.journal || '';
   renderJournalTags();
-  document.getElementById('bigevent').value = currentRecord.bigEvent || '';
+  renderBigEvent();
   renderExercise();
   renderHabits();
   renderDone();

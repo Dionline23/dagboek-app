@@ -169,8 +169,22 @@
 
       <div class="card" id="bigevent-card">
         <h2>🌟 Big Event</h2>
-        <p class="hint">Iets groots in je leven? (bijv. de geboorte van je kind). Alleen invullen als er echt iets is — later zie je in Inzichten de nasleep hiervan.</p>
-        <input type="text" id="bigevent" maxlength="120" placeholder="Bijv. Zoon geboren 🎉">
+        <p class="hint">Iets groots in je leven? (bijv. de geboorte van je kind). Later zie je in Inzichten de nasleep hiervan.</p>
+        <div id="bigevent-display" class="bigevent-display hidden">
+          <span id="bigevent-text"></span>
+          <div class="bigevent-actions">
+            <button type="button" id="bigevent-edit" class="btn-small">Wijzigen</button>
+            <button type="button" id="bigevent-remove" class="btn-small">Verwijderen</button>
+          </div>
+        </div>
+        <button type="button" id="bigevent-add" class="btn btn-secondary">+ Big Event toevoegen</button>
+        <div id="bigevent-form" class="bigevent-form hidden">
+          <input type="text" id="bigevent" maxlength="120" placeholder="Bijv. Zoon geboren 🎉">
+          <div class="bigevent-actions">
+            <button type="button" id="bigevent-cancel" class="btn btn-secondary">Annuleren</button>
+            <button type="button" id="bigevent-save" class="btn">Bewaren</button>
+          </div>
+        </div>
       </div>
 
       <div class="card" id="writehelp-card">
@@ -303,13 +317,14 @@
 
       <div class="card">
         <div class="period-row">
-          <h2>📈 Periode</h2>
+          <h2>📈 Weergave</h2>
           <div class="segment" id="period-segment">
-            <button data-days="7">Week</button>
-            <button data-days="30" class="active">Maand</button>
-            <button data-days="90">3 mnd</button>
+            <button data-mode="day" class="active">Dag</button>
+            <button data-mode="week">Week</button>
+            <button data-mode="month">Maand</button>
           </div>
         </div>
+        <p class="hint" id="period-hint">Laatste 30 dagen, per dag.</p>
       </div>
 
       <div class="card">
