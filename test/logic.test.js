@@ -1,6 +1,6 @@
-const { test } = require('node:test');
-const assert = require('node:assert/strict');
-const L = require('../js/logic.js');
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import * as L from '../js/logic.js';
 
 test('toISODate en todayStr geven YYYY-MM-DD met nul-padding', () => {
   assert.equal(L.toISODate(new Date(2026, 0, 5)), '2026-01-05');

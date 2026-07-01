@@ -1,4 +1,4 @@
-const CACHE = 'dagboek-v29';
+const CACHE = 'dagboek-v30';
 const ASSETS = [
   './',
   './index.html',
@@ -7,8 +7,15 @@ const ASSETS = [
   './js/logic.js',
   './js/db.js',
   './js/charts.js',
+  './js/bodymap.js',
+  './js/core.js',
   './js/backup.js',
-  './js/app.js',
+  './js/today.js',
+  './js/pain.js',
+  './js/history.js',
+  './js/insights.js',
+  './js/settings.js',
+  './js/main.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
