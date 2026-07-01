@@ -57,6 +57,25 @@ test('extractTags: uniek, lowercase, met unicode', () => {
   assert.deepEqual(L.extractTags(null), []);
 });
 
+test('normalizeDay vult defaults zonder bestaande data te wissen', () => {
+  const empty = L.normalizeDay({ date: '2026-06-01' });
+  assert.equal(empty.mood, null);
+  assert.deepEqual(empty.gratitude, ['', '', '']);
+  assert.deepEqual(empty.habits, {});
+  assert.deepEqual(empty.painDetails, {});
+  assert.equal('painScore' in empty, false);
+
+  const partial = L.normalizeDay({ date: '2026-06-02', mood: 4, journal: 'hoi', painScore: 6 });
+  assert.equal(partial.mood, 4);
+  assert.equal(partial.journal, 'hoi');
+  assert.equal(partial.painScore, 6);        // legacy blijft behouden
+  assert.deepEqual(partial.painLocations, []); // ontbrekend → default
+
+  // bestaande verwijzingen (habits) blijven behouden zodat mutaties bewaard blijven
+  const habits = { mediteren: true };
+  assert.equal(L.normalizeDay({ date: '2026-06-03', habits }).habits, habits);
+});
+
 test('sanitizeDay strandt HTML/ongeldige waarden en dwingt types af', () => {
   const dirty = {
     date: '2026-06-01',

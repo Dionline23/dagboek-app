@@ -20,28 +20,7 @@ let currentRecord = null;
 let saveTimer = null;
 
 function emptyRecord(date) {
-  return {
-    date,
-    mood: null,
-    morningScore: null,
-    morningScoreNote: '',
-    eveningScore: null,
-    eveningScoreNote: '',
-    gratitude: ['', '', ''],
-    journal: '',
-    exerciseMinutes: null,
-    habits: {},
-    painMorning: null,
-    painMorningNote: '',
-    painAfternoon: null,
-    painAfternoonNote: '',
-    painEvening: null,
-    painEveningNote: '',
-    painLocations: [],
-    painDetails: {},
-    painNote: '',
-    done: {},
-  };
+  return normalizeDay({ date });
 }
 
 // ---- Stemming ----
@@ -111,7 +90,7 @@ async function renderOnThisDay() {
   const [y, m, d] = todayStr().split('-').map(Number);
   const targets = [
     { label: '1 maand geleden', date: monthsAgo(y, m, d, 1) },
-    { label: '1 jaar geleden', date: `${y - 1}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}` },
+    { label: '1 jaar geleden', date: toISODate(new Date(y - 1, m - 1, d)) },
     { label: '6 maanden geleden', date: monthsAgo(y, m, d, 6) },
   ];
   list.innerHTML = '';
@@ -204,12 +183,8 @@ function renderDone() {
 }
 
 async function loadCurrent() {
-  currentRecord = (await dbGetDay(currentDate)) || emptyRecord(currentDate);
-  if (!currentRecord.painLocations) currentRecord.painLocations = [];
-  if (!currentRecord.gratitude) currentRecord.gratitude = ['', '', ''];
-  if (!currentRecord.done) currentRecord.done = {};
-  if (!currentRecord.habits) currentRecord.habits = {};
-  if (!currentRecord.painDetails) currentRecord.painDetails = {};
+  // normalizeDay vult ontbrekende velden centraal aan (nieuwe én ingeladen dagen)
+  currentRecord = normalizeDay((await dbGetDay(currentDate)) || { date: currentDate });
 }
 
 function scheduleSave() {
@@ -755,7 +730,7 @@ function renderCalendar() {
   }
   const today = todayStr();
   for (let d = 1; d <= daysInMonth; d++) {
-    const date = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const date = toISODate(new Date(y, m, d));
     const cell = document.createElement('button');
     cell.type = 'button';
     cell.className = 'cal-day';

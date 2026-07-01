@@ -56,6 +56,38 @@ function hasContent(r) {
     (r.gratitude || []).some((g) => g && g.trim() !== '');
 }
 
+// ---- Record-normalisatie ----
+// Vult ontbrekende velden met veilige defaults zonder bestaande (vertrouwde)
+// data te wijzigen. Gebruikt voor zowel nieuwe als ingeladen dagen, zodat het
+// aanvullen van defaults op één plek gebeurt (i.p.v. in emptyRecord én loadCurrent).
+function normalizeDay(r) {
+  r = r || {};
+  const clean = {
+    date: r.date,
+    mood: r.mood ?? null,
+    morningScore: r.morningScore ?? null,
+    morningScoreNote: r.morningScoreNote ?? '',
+    eveningScore: r.eveningScore ?? null,
+    eveningScoreNote: r.eveningScoreNote ?? '',
+    gratitude: Array.isArray(r.gratitude) ? r.gratitude : ['', '', ''],
+    journal: r.journal ?? '',
+    exerciseMinutes: r.exerciseMinutes ?? null,
+    habits: (r.habits && typeof r.habits === 'object') ? r.habits : {},
+    painMorning: r.painMorning ?? null,
+    painMorningNote: r.painMorningNote ?? '',
+    painAfternoon: r.painAfternoon ?? null,
+    painAfternoonNote: r.painAfternoonNote ?? '',
+    painEvening: r.painEvening ?? null,
+    painEveningNote: r.painEveningNote ?? '',
+    painLocations: Array.isArray(r.painLocations) ? r.painLocations : [],
+    painDetails: (r.painDetails && typeof r.painDetails === 'object') ? r.painDetails : {},
+    painNote: r.painNote ?? '',
+    done: (r.done && typeof r.done === 'object') ? r.done : {},
+  };
+  if (r.painScore != null) clean.painScore = r.painScore; // legacy losse pijnscore
+  return clean;
+}
+
 // ---- Journal #tags ----
 function extractTags(text) {
   const out = [];
@@ -137,7 +169,7 @@ function sanitizeDay(day) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     toISODate, todayStr, addDays, monthsAgo, formatDate, relativeDayLabel,
-    painRepresentative, hasContent, extractTags,
+    painRepresentative, hasContent, extractTags, normalizeDay,
     importNum, importStr, importBoolMap, sanitizeDay,
   };
 }
