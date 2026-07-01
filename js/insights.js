@@ -2,16 +2,26 @@
 // correlaties, beste/zwaarste dagen en de pijn-heatmap.
 import { emptyState, openDate, getGoal } from './core.js';
 import {
-  todayStr, addDays, painRepresentative, hasContent, formatDate, computeRegionStats,
+  todayStr, addDays, painRepresentative, hasContent, formatDate,
+  computeRegionStats, bucketsFor,
 } from './logic.js';
 import { dbGetAllDays } from './db.js';
 import { drawLineChart } from './charts.js';
 import { REGION_LABELS, PAIN_TYPES } from './bodymap.js';
 
-let insightDays = 30;
+// Groepering van de grafieken: per dag, per week­gemiddelde of per maand­gemiddelde.
+let insightMode = 'day';
 
-export function setInsightPeriod(days) {
-  insightDays = days;
+const PERIOD_HINTS = {
+  day: 'Laatste 30 dagen, per dag.',
+  week: 'Laatste 52 weken, gemiddelde per week.',
+  month: 'Laatste 12 maanden, gemiddelde per maand.',
+};
+
+export function setInsightMode(mode) {
+  insightMode = mode;
+  const hint = document.getElementById('period-hint');
+  if (hint) hint.textContent = PERIOD_HINTS[mode] || '';
   renderInzichten();
 }
 
@@ -270,33 +280,52 @@ export async function renderInzichten() {
   renderSmartInsights(all);
   renderBestWorst(all);
   renderPainHeatmap(all);
-  const dates = [];
-  for (let i = insightDays - 1; i >= 0; i--) dates.push(addDays(today, -i));
 
-  const pick = (field) =>
-    dates
-      .map((d) => ({ date: d, value: byDate.has(d) ? byDate.get(d)[field] : null }))
-      .filter((p) => p.value != null);
-  const pickPain = () =>
-    dates
-      .map((d) => ({ date: d, value: byDate.has(d) ? painRepresentative(byDate.get(d)) : null }))
-      .filter((p) => p.value != null);
+  const buckets = bucketsFor(insightMode, today);
+  const dates = buckets.map((b) => b.key);
+  const labels = buckets.map((b) => b.label);
 
-  // Big Event-markeringen binnen de zichtbare periode
-  const events = dates
-    .filter((d) => byDate.has(d) && (byDate.get(d).bigEvent || '').trim())
-    .map((d) => ({ date: d, text: byDate.get(d).bigEvent.trim() }));
+  // gemiddelde van een veld over de dagen in een bucket (lege dagen tellen niet mee)
+  const aggregate = (valueFn) => buckets
+    .map((b) => {
+      const vals = [];
+      for (const d of b.days) {
+        if (!byDate.has(d)) continue;
+        const v = valueFn(byDate.get(d));
+        if (v != null) vals.push(v);
+      }
+      return { date: b.key, value: vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null };
+    })
+    .filter((p) => p.value != null);
+
+  const pick = (field) => aggregate((r) => r[field]);
+  const pickPain = () => aggregate((r) => painRepresentative(r));
+
+  // Big Events → gekoppeld aan hun bucket (meerdere in één bucket worden samengevoegd)
+  const dayToBucket = new Map();
+  for (const b of buckets) for (const d of b.days) dayToBucket.set(d, b.key);
+  const eventsMap = new Map();
+  for (const day of all) {
+    const txt = (day.bigEvent || '').trim();
+    if (!txt) continue;
+    const bk = dayToBucket.get(day.date);
+    if (!bk) continue;
+    eventsMap.set(bk, eventsMap.has(bk) ? eventsMap.get(bk) + ' · ' + txt : txt);
+  }
+  const events = [...eventsMap].map(([date, text]) => ({ date, text }));
+
+  const common = { dates, labels, events };
 
   drawLineChart(document.getElementById('chart-scores'), [
     { label: 'Ochtend', color: '#f0c24b', points: pick('morningScore') },
     { label: 'Avond', color: '#6aa0e6', points: pick('eveningScore') },
-  ], { dates, yMin: 0, yMax: 10, events });
+  ], { ...common, yMin: 0, yMax: 10 });
 
   drawLineChart(document.getElementById('chart-pain'), [
     { label: 'Pijn', color: '#ef8aa8', points: pickPain() },
-  ], { dates, yMin: 0, yMax: 10, events });
+  ], { ...common, yMin: 0, yMax: 10 });
 
   drawLineChart(document.getElementById('chart-exercise'), [
     { label: 'Sport', color: '#5cc2a3', points: pick('exerciseMinutes') },
-  ], { dates, yMin: 0, events });
+  ], { ...common, yMin: 0 });
 }
