@@ -1,5 +1,5 @@
-// Pure, browser-onafhankelijke logica. Gedeeld door de app (via <script>) en
-// door de unit-tests (via require in Node). Geen DOM/IndexedDB hier.
+// Pure, browser-onafhankelijke logica (ES-module). Gedeeld door de app en door
+// de unit-tests. Geen DOM/IndexedDB hier.
 
 // ---- Datum-helpers (lokale tijdzone) ----
 function toISODate(dt) {
@@ -164,12 +164,9 @@ function sanitizeDay(day) {
   return clean;
 }
 
-// Dual-export: in de browser zijn deze functies globaal (via <script>),
-// in Node zijn ze importeerbaar voor de tests.
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    toISODate, todayStr, addDays, monthsAgo, formatDate, relativeDayLabel,
-    painRepresentative, hasContent, extractTags, normalizeDay,
-    importNum, importStr, importBoolMap, sanitizeDay,
-  };
-}
+export {
+  DAGEN, MAANDEN,
+  toISODate, todayStr, addDays, monthsAgo, formatDate, relativeDayLabel,
+  painRepresentative, hasContent, extractTags, normalizeDay,
+  importNum, importStr, importBoolMap, sanitizeDay,
+};

@@ -1,3 +1,7 @@
+// Back-up: JSON/CSV/tekst exporteren en JSON importeren.
+import { todayStr, formatDate, painRepresentative, hasContent, sanitizeDay } from './logic.js';
+import { dbGetAllDays, dbPutDay } from './db.js';
+
 // Export: alle dagen als JSON-bestand downloaden.
 // Import: JSON-bestand inlezen en mergen op datum (bestand wint).
 async function exportBackup() {
@@ -94,3 +98,5 @@ async function importBackup(file) {
   }
   return count;
 }
+
+export { exportBackup, exportCsv, exportText, importBackup };

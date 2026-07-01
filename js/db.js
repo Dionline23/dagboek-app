@@ -69,3 +69,5 @@ async function dbGetAllDays() {
     req.onerror = () => reject(req.error);
   });
 }
+
+export { openDb, dbGetDay, dbPutDay, dbGetAllDays, migrateDb };
