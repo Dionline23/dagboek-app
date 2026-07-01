@@ -1,6 +1,19 @@
 // Datum-helpers (todayStr/addDays/monthsAgo/formatDate/relativeDayLabel),
 // painRepresentative, hasContent en extractTags staan in js/logic.js.
 
+// ---- localStorage-sleutels (één bron van waarheid) ----
+// Let op: js/boot.js gebruikt 'dagboek-theme' en 'dagboek-pin' letterlijk,
+// omdat het als losse bootstrap vóór dit bestand draait.
+const LS = {
+  theme: 'dagboek-theme',
+  pin: 'dagboek-pin',
+  pinSalt: 'dagboek-pin-salt',
+  habits: 'dagboek-habits',
+  goalExercise: 'dagboek-goal-exercise',
+  gratitudeCount: 'dagboek-gratitude-count',
+  onboarded: 'dagboek-onboarded',
+};
+
 // ---- State ----
 let currentDate = todayStr();
 let currentRecord = null;
@@ -365,7 +378,7 @@ function renderExercise() {
 
 // ---- Dankbaarheid (aanpasbaar aantal velden) ----
 function getGratitudeCount() {
-  return Math.min(5, Math.max(1, parseInt(localStorage.getItem('dagboek-gratitude-count') || '3', 10) || 3));
+  return Math.min(5, Math.max(1, parseInt(localStorage.getItem(LS.gratitudeCount) || '3', 10) || 3));
 }
 
 function buildGratitude() {
@@ -434,9 +447,9 @@ function insertPrompt() {
 
 // ---- Gewoontes (aanpasbaar) ----
 function getHabits() {
-  try { return JSON.parse(localStorage.getItem('dagboek-habits')) || []; } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(LS.habits)) || []; } catch { return []; }
 }
-function saveHabits(arr) { localStorage.setItem('dagboek-habits', JSON.stringify(arr)); }
+function saveHabits(arr) { localStorage.setItem(LS.habits, JSON.stringify(arr)); }
 
 function renderHabits() {
   const habits = getHabits();
@@ -517,8 +530,8 @@ async function renderVandaag() {
   renderExercise();
   renderHabits();
   renderDone();
-  renderMissedPrompt();
-  renderOnThisDay();
+  await renderMissedPrompt();
+  await renderOnThisDay();
 }
 
 // ---- Tab: Pijn ----
@@ -869,7 +882,7 @@ async function openDate(date) {
 let insightDays = 30;
 
 function getGoal() {
-  return parseInt(localStorage.getItem('dagboek-goal-exercise') || '0', 10) || 0;
+  return parseInt(localStorage.getItem(LS.goalExercise) || '0', 10) || 0;
 }
 
 function weekStats(byDate, today) {
@@ -1109,8 +1122,8 @@ function switchTab(name) {
 }
 
 // ---- Pincode (app-slot) ----
-const PIN_HASH_KEY = 'dagboek-pin';
-const PIN_SALT_KEY = 'dagboek-pin-salt';
+const PIN_HASH_KEY = LS.pin;
+const PIN_SALT_KEY = LS.pinSalt;
 const PIN_ITERATIONS = 150000;
 
 function getPinSalt() {
@@ -1294,11 +1307,11 @@ function applyThemeColorMeta(theme) {
 }
 
 function getTheme() {
-  return localStorage.getItem('dagboek-theme') || 'auto';
+  return localStorage.getItem(LS.theme) || 'auto';
 }
 
 function setTheme(theme) {
-  localStorage.setItem('dagboek-theme', theme);
+  localStorage.setItem(LS.theme, theme);
   document.documentElement.dataset.theme = theme;
   applyThemeColorMeta(theme);
   for (const b of document.querySelectorAll('#theme-segment button')) {
@@ -1328,7 +1341,7 @@ function initGoalUI() {
   input.value = getGoal() || '';
   input.addEventListener('input', () => {
     const v = Math.min(10080, Math.max(0, parseInt(input.value, 10) || 0));
-    localStorage.setItem('dagboek-goal-exercise', String(v));
+    localStorage.setItem(LS.goalExercise, String(v));
   });
 }
 
@@ -1366,7 +1379,7 @@ async function init() {
   gratCountVal.textContent = getGratitudeCount();
   const changeGratCount = (dir) => {
     const next = Math.min(5, Math.max(1, getGratitudeCount() + dir));
-    localStorage.setItem('dagboek-gratitude-count', String(next));
+    localStorage.setItem(LS.gratitudeCount, String(next));
     gratCountVal.textContent = next;
     buildGratitude();
     renderGratitude();
@@ -1556,14 +1569,14 @@ async function init() {
 
   // onboarding bij eerste gebruik
   const ob = document.getElementById('onboarding');
-  if (!localStorage.getItem('dagboek-onboarded')) ob.classList.remove('hidden');
+  if (!localStorage.getItem(LS.onboarded)) ob.classList.remove('hidden');
   document.getElementById('ob-start').addEventListener('click', () => {
-    localStorage.setItem('dagboek-onboarded', '1');
+    localStorage.setItem(LS.onboarded, '1');
     ob.classList.add('hidden');
   });
 
   // pincode: vergrendel bij openen
-  if (localStorage.getItem('dagboek-pin')) openLockScreen(false);
+  if (localStorage.getItem(LS.pin)) openLockScreen(false);
   else document.documentElement.classList.remove('locked');
 
   if ('serviceWorker' in navigator) {
