@@ -68,9 +68,11 @@ const BACK_REGIONS = [
 
 function regionsSvg(regions) {
   const sil = SILHOUETTE.map((d) => `<path class="body-silhouette" d="${d}"></path>`).join('');
+  // Regio's zijn met toetsenbord bedienbaar: focusbaar + rol/label voor screenreaders.
+  const a11y = (id) => `tabindex="0" role="button" aria-pressed="false" aria-label="${REGION_LABELS[id] || id}"`;
   const reg = regions.map((r) => r.ellipse
-    ? `<ellipse class="region" data-region="${r.id}" cx="${r.ellipse.cx}" cy="${r.ellipse.cy}" rx="${r.ellipse.rx}" ry="${r.ellipse.ry}"></ellipse>`
-    : `<path class="region" data-region="${r.id}" d="${r.d}"></path>`
+    ? `<ellipse class="region" data-region="${r.id}" ${a11y(r.id)} cx="${r.ellipse.cx}" cy="${r.ellipse.cy}" rx="${r.ellipse.rx}" ry="${r.ellipse.ry}"></ellipse>`
+    : `<path class="region" data-region="${r.id}" ${a11y(r.id)} d="${r.d}"></path>`
   ).join('');
   return sil + reg;
 }
