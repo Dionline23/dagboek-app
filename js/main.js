@@ -8,7 +8,7 @@ import { todayStr, addDays } from './logic.js';
 import {
   buildMoodRow, buildExercisePresets, buildGratitude, initGratitudeStepper,
   initWritingHelp, initHabitsManager, initJournalInput, initExerciseInput,
-  initDoneButtons, renderVandaag,
+  initDoneButtons, initBigEvent, renderVandaag,
 } from './today.js';
 import { initBodyMap, renderPijn } from './pain.js';
 import { renderGeschiedenis, setTagFilter, calPrevMonth, calNextMonth } from './history.js';
@@ -47,6 +47,7 @@ async function init() {
 
   buildGratitude();
   initJournalInput();
+  initBigEvent();
   initExerciseInput();
 
   document.getElementById('btn-back-to-today').addEventListener('click', backToToday);

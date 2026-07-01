@@ -1,6 +1,15 @@
 // Lichaamskaarten (voor/achter) uit data opgebouwd, zodat het silhouet niet
 // meer 2× (en de regio's niet meer als losse HTML) gedupliceerd staan (C5).
 
+// Soorten pijn — gedeeld door de invoer (Pijn-tab) en de heatmap-statistiek.
+export const PAIN_TYPES = [
+  { id: 'scherp', label: 'Scherp' },
+  { id: 'zeurend', label: 'Zeurend' },
+  { id: 'stekend', label: 'Stekend' },
+  { id: 'branderig', label: 'Branderig' },
+  { id: 'zenuw', label: 'Zenuw' },
+];
+
 export const REGION_LABELS = {
   // voorkant
   hoofd: 'Hoofd', nek: 'Nek', 'schouder-l': 'Schouder links', 'schouder-r': 'Schouder rechts',

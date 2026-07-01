@@ -1,9 +1,12 @@
 // Tab: Inzichten — weekgemiddelden, sportdoel, lijngrafieken, lokale
 // correlaties, beste/zwaarste dagen en de pijn-heatmap.
 import { emptyState, openDate, getGoal } from './core.js';
-import { todayStr, addDays, painRepresentative, hasContent, formatDate } from './logic.js';
+import {
+  todayStr, addDays, painRepresentative, hasContent, formatDate, computeRegionStats,
+} from './logic.js';
 import { dbGetAllDays } from './db.js';
 import { drawLineChart } from './charts.js';
+import { REGION_LABELS, PAIN_TYPES } from './bodymap.js';
 
 let insightDays = 30;
 
@@ -155,6 +158,52 @@ function heatColor(r) {
   return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
 }
 
+function typeLabel(id) {
+  if (!id) return '–';
+  return (PAIN_TYPES.find((t) => t.id === id) || {}).label || id;
+}
+
+const num1 = (v) => String(Math.round(v * 10) / 10).replace('.', ',');
+
+// Toont de cijfers van één lichaamsregio onder de heatmap.
+function showRegionStats(id, stats) {
+  const panel = document.getElementById('heat-stats');
+  if (!panel) return;
+  const label = REGION_LABELS[id] || id;
+  const s = stats[id];
+  panel.innerHTML = '';
+  const title = document.createElement('div');
+  title.className = 'hs-title';
+  title.textContent = '📍 ' + label;
+  panel.appendChild(title);
+  if (!s) {
+    const p = document.createElement('div');
+    p.className = 'hs-empty';
+    p.textContent = 'Hier heb je nog geen pijn geregistreerd.';
+    panel.appendChild(p);
+    return;
+  }
+  const rows = [
+    ['Dagen aangetikt', String(s.days)],
+    ['Gem. intensiteit', s.avg != null ? num1(s.avg) : '–'],
+    ['Hoogste', s.max ? num1(s.max) : '–'],
+    ['Meest voorkomend', typeLabel(s.topType)],
+    ['Laatst', s.last ? formatDate(s.last, false) : '–'],
+  ];
+  const grid = document.createElement('div');
+  grid.className = 'hs-grid';
+  for (const [k, v] of rows) {
+    const cell = document.createElement('div');
+    cell.className = 'hs-cell';
+    const vv = document.createElement('span'); vv.className = 'hs-v'; vv.textContent = v;
+    const kk = document.createElement('span'); kk.className = 'hs-k'; kk.textContent = k;
+    cell.appendChild(vv);
+    cell.appendChild(kk);
+    grid.appendChild(cell);
+  }
+  panel.appendChild(grid);
+}
+
 function renderPainHeatmap(all) {
   // heat = som van pijnintensiteit per plek over alle dagen
   // (vaker aangetikt → meer optellingen, hoger cijfer → grotere optelling)
@@ -172,23 +221,42 @@ function renderPainHeatmap(all) {
   let max = 0;
   for (const k in heat) if (heat[k] > max) max = heat[k];
 
+  const stats = computeRegionStats(all);
+  const panel = document.getElementById('heat-stats');
+  if (panel) panel.innerHTML = '';
+
+  // markeer de gekozen plek (op beide kaarten) en toon de cijfers
+  const open = (id) => {
+    for (const r of document.querySelectorAll('.heatmap .region')) {
+      const on = r.dataset.region === id;
+      r.classList.toggle('active', on);
+      r.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    showRegionStats(id, stats);
+  };
+
   for (const [srcId, dstId] of [['bodymap-front', 'heat-front'], ['bodymap-back', 'heat-back']]) {
     const src = document.getElementById(srcId);
     const dst = document.getElementById(dstId);
     if (!src || !dst) continue;
-    const clone = src.cloneNode(true);
+    const clone = src.cloneNode(true); // event-listeners worden niet meegekopieerd
     clone.removeAttribute('id');
     clone.classList.add('heatmap');
-    clone.setAttribute('aria-hidden', 'true'); // decoratief: niet aankondigen
     for (const sh of clone.querySelectorAll('.region')) {
+      const id = sh.dataset.region;
       sh.classList.remove('sel');
-      // niet interactief in de heatmap
-      sh.removeAttribute('tabindex');
-      sh.removeAttribute('role');
-      sh.removeAttribute('aria-pressed');
-      const h = heat[sh.dataset.region] || 0;
+      sh.setAttribute('aria-pressed', 'false');
+      const label = REGION_LABELS[id] || id;
+      sh.setAttribute('aria-label', stats[id]
+        ? `${label}: ${stats[id].days} dagen — statistiek bekijken`
+        : `${label}: geen pijn geregistreerd`);
+      const h = heat[id] || 0;
       sh.style.fill = (h > 0 && max > 0) ? heatColor(h / max) : 'var(--surface-2)';
       sh.style.stroke = 'var(--border)';
+      sh.addEventListener('click', () => open(id));
+      sh.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); open(id); }
+      });
     }
     dst.replaceChildren(clone);
   }
@@ -214,16 +282,21 @@ export async function renderInzichten() {
       .map((d) => ({ date: d, value: byDate.has(d) ? painRepresentative(byDate.get(d)) : null }))
       .filter((p) => p.value != null);
 
+  // Big Event-markeringen binnen de zichtbare periode
+  const events = dates
+    .filter((d) => byDate.has(d) && (byDate.get(d).bigEvent || '').trim())
+    .map((d) => ({ date: d, text: byDate.get(d).bigEvent.trim() }));
+
   drawLineChart(document.getElementById('chart-scores'), [
     { label: 'Ochtend', color: '#f0c24b', points: pick('morningScore') },
     { label: 'Avond', color: '#6aa0e6', points: pick('eveningScore') },
-  ], { dates, yMin: 0, yMax: 10 });
+  ], { dates, yMin: 0, yMax: 10, events });
 
   drawLineChart(document.getElementById('chart-pain'), [
     { label: 'Pijn', color: '#ef8aa8', points: pickPain() },
-  ], { dates, yMin: 0, yMax: 10 });
+  ], { dates, yMin: 0, yMax: 10, events });
 
   drawLineChart(document.getElementById('chart-exercise'), [
     { label: 'Sport', color: '#5cc2a3', points: pick('exerciseMinutes') },
-  ], { dates, yMin: 0 });
+  ], { dates, yMin: 0, events });
 }
