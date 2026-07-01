@@ -1,8 +1,10 @@
-const CACHE = 'dagboek-v26';
+const CACHE = 'dagboek-v27';
 const ASSETS = [
   './',
   './index.html',
   './css/style.css',
+  './js/boot.js',
+  './js/logic.js',
   './js/db.js',
   './js/charts.js',
   './js/backup.js',

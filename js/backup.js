@@ -74,69 +74,7 @@ async function exportText() {
   downloadBlob(txt, filename, 'text/plain;charset=utf-8');
 }
 
-// Maakt een schoon record uit onbetrouwbare import-data: alleen bekende velden,
-// juiste types en zinnige grenzen. Voorkomt dat corrupte/gemanipuleerde back-ups
-// vreemde waarden (bv. HTML in een cijferveld) de app in krijgen.
-function importNum(v, min, max) {
-  if (v == null || v === '') return null;
-  const n = Number(v);
-  if (!Number.isFinite(n)) return null;
-  if (min != null && n < min) return null;
-  if (max != null && n > max) return null;
-  return n;
-}
-function importStr(v) {
-  return typeof v === 'string' ? v : (v == null ? '' : String(v));
-}
-function importBoolMap(v) {
-  const out = {};
-  if (v && typeof v === 'object') for (const k of Object.keys(v)) out[k] = !!v[k];
-  return out;
-}
-
-function sanitizeDay(day) {
-  const clean = {
-    date: day.date,
-    mood: importNum(day.mood, 1, 5),
-    morningScore: importNum(day.morningScore, 0, 10),
-    eveningScore: importNum(day.eveningScore, 0, 10),
-    morningScoreNote: importStr(day.morningScoreNote),
-    eveningScoreNote: importStr(day.eveningScoreNote),
-    gratitude: Array.isArray(day.gratitude) ? day.gratitude.map(importStr) : [],
-    journal: importStr(day.journal),
-    exerciseMinutes: importNum(day.exerciseMinutes, 0, 1440),
-    habits: importBoolMap(day.habits),
-    painMorning: importNum(day.painMorning, 0, 10),
-    painAfternoon: importNum(day.painAfternoon, 0, 10),
-    painEvening: importNum(day.painEvening, 0, 10),
-    painMorningNote: importStr(day.painMorningNote),
-    painAfternoonNote: importStr(day.painAfternoonNote),
-    painEveningNote: importStr(day.painEveningNote),
-    painLocations: Array.isArray(day.painLocations)
-      ? day.painLocations.filter((x) => typeof x === 'string')
-      : [],
-    painDetails: {},
-    painNote: importStr(day.painNote),
-    done: importBoolMap(day.done),
-  };
-  // legacy losse pijnscore
-  const legacy = importNum(day.painScore, 0, 10);
-  if (legacy != null) clean.painScore = legacy;
-  // pijn per plek: alleen bekende vorm { type, intensity }
-  if (day.painDetails && typeof day.painDetails === 'object') {
-    for (const k of Object.keys(day.painDetails)) {
-      const d = day.painDetails[k];
-      if (d && typeof d === 'object') {
-        clean.painDetails[k] = {
-          type: typeof d.type === 'string' ? d.type : null,
-          intensity: importNum(d.intensity, 0, 10),
-        };
-      }
-    }
-  }
-  return clean;
-}
-
+// sanitizeDay (import-validatie) staat in js/logic.js.
 async function importBackup(file) {
   const text = await file.text();
   let data;
