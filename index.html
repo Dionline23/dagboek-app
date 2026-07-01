@@ -3,23 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="theme-color" content="#ffffff">
   <title>Dagboek</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <script>
-    // thema + lock-scherm meteen toepassen (voorkomt flits van verkeerde kleuren/inhoud)
-    (function () {
-      try {
-        var t = localStorage.getItem('dagboek-theme') || 'auto';
-        document.documentElement.dataset.theme = t;
-        if (localStorage.getItem('dagboek-pin')) document.documentElement.classList.add('locked');
-      } catch (e) {
-        document.documentElement.dataset.theme = 'auto';
-      }
-    })();
-  </script>
+  <!-- thema + lock-scherm meteen toepassen; los bestand i.v.m. strikte CSP -->
+  <script src="js/boot.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -461,14 +452,6 @@
       </div>
 
       <div class="card">
-        <h2>🔗 Koppelingen &amp; sync</h2>
-        <p class="hint">Binnenkort beschikbaar.</p>
-        <button class="link-btn" disabled>⌚ Garmin Connect koppelen <span class="soon-badge">Binnenkort</span></button>
-        <button class="link-btn" disabled>❤️ Andere gezondheidsapp koppelen <span class="soon-badge">Binnenkort</span></button>
-        <button class="link-btn" disabled>☁️ Cloud-back-up &amp; sync <span class="soon-badge">Binnenkort</span></button>
-      </div>
-
-      <div class="card">
         <h2>💾 Back-up</h2>
         <p class="hint">Je data staat alleen op dit apparaat. Maak regelmatig een back-up.</p>
         <div class="backup-row">
@@ -493,6 +476,7 @@
     <button class="tabbtn" data-tab="meer"><span class="ico">⚙️</span>Meer</button>
   </nav>
 
+  <script src="js/logic.js"></script>
   <script src="js/db.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/backup.js"></script>

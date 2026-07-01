@@ -1,34 +1,5 @@
-// ---- Datum-helpers (lokale tijdzone) ----
-function todayStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function addDays(dateStr, n) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const dt = new Date(y, m - 1, d + n);
-  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-}
-
-const DAGEN = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
-const MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
-
-function formatDate(dateStr, withDay = true) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const dt = new Date(y, m - 1, d);
-  const base = `${d} ${MAANDEN[m - 1]} ${y}`;
-  return withDay ? `${DAGEN[dt.getDay()]} ${base}` : base;
-}
-
-// "vandaag" / "gisteren" / "eergisteren" / volledige datum
-function relativeDayLabel(dateStr) {
-  const diff = Math.round((new Date(todayStr()) - new Date(dateStr)) / 86400000);
-  if (diff === 0) return 'Vandaag';
-  if (diff === 1) return 'Gisteren';
-  if (diff === 2) return 'Eergisteren';
-  if (diff === -1) return 'Morgen';
-  return formatDate(dateStr, false);
-}
+// Datum-helpers (todayStr/addDays/monthsAgo/formatDate/relativeDayLabel),
+// painRepresentative, hasContent en extractTags staan in js/logic.js.
 
 // ---- State ----
 let currentDate = todayStr();
@@ -58,14 +29,6 @@ function emptyRecord(date) {
     painNote: '',
     done: {},
   };
-}
-
-// representatieve pijnscore van een dag (gemiddelde van ingevulde dagdelen, anders oude losse score)
-function painRepresentative(r) {
-  if (!r) return null;
-  const parts = [r.painMorning, r.painAfternoon, r.painEvening].filter((v) => v != null);
-  if (parts.length) return parts.reduce((s, v) => s + v, 0) / parts.length;
-  return r.painScore != null ? r.painScore : null;
 }
 
 // ---- Stemming ----
@@ -103,18 +66,7 @@ function renderMood() {
   }
 }
 
-// ---- Journal #tags ----
-function extractTags(text) {
-  const out = [];
-  const re = /#([\p{L}0-9_]+)/gu;
-  let m;
-  while ((m = re.exec(text || '')) !== null) {
-    const t = m[1].toLowerCase();
-    if (!out.includes(t)) out.push(t);
-  }
-  return out;
-}
-
+// ---- Journal #tags ---- (extractTags staat in js/logic.js)
 function renderJournalTags() {
   const wrap = document.getElementById('journal-tags');
   const tags = extractTags(currentRecord.journal);
@@ -166,21 +118,9 @@ async function renderOnThisDay() {
   card.classList.toggle('hidden', !any);
 }
 
-function monthsAgo(y, m, d, n) {
-  const dt = new Date(y, m - 1 - n, d);
-  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-}
-
 // ---- Streak: aantal dagen op rij ingevuld ----
+// (monthsAgo en hasContent staan in js/logic.js)
 let streakText = '';
-
-function hasContent(r) {
-  return r.mood != null || r.morningScore != null || r.eveningScore != null ||
-    painRepresentative(r) != null || r.exerciseMinutes != null ||
-    Object.values(r.habits || {}).some(Boolean) ||
-    (r.painLocations || []).length > 0 || (r.journal || '').trim() !== '' ||
-    (r.gratitude || []).some((g) => g && g.trim() !== '');
-}
 
 async function computeStreak() {
   const all = await dbGetAllDays();
@@ -1387,7 +1327,7 @@ function initGoalUI() {
   const input = document.getElementById('goal-input');
   input.value = getGoal() || '';
   input.addEventListener('input', () => {
-    const v = Math.max(0, parseInt(input.value, 10) || 0);
+    const v = Math.min(10080, Math.max(0, parseInt(input.value, 10) || 0));
     localStorage.setItem('dagboek-goal-exercise', String(v));
   });
 }
@@ -1475,7 +1415,7 @@ async function init() {
     scheduleSave();
   });
   document.getElementById('exercise-minutes').addEventListener('input', (e) => {
-    const v = e.target.value === '' ? null : Math.max(0, parseInt(e.target.value, 10) || 0);
+    const v = e.target.value === '' ? null : Math.min(1440, Math.max(0, parseInt(e.target.value, 10) || 0));
     currentRecord.exerciseMinutes = v;
     for (const btn of document.getElementById('exercise-presets').children) {
       btn.classList.toggle('selected', Number(btn.dataset.value) === v);
