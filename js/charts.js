@@ -215,13 +215,23 @@ function drawLineChart(canvas, series, opts) {
   if (!canvas._interactSetup) {
     canvas._interactSetup = true;
 
-    canvas.addEventListener('pointermove', (e) => canvas._render(canvas._getCanvasX(e)));
-    canvas.addEventListener('pointerleave', () => canvas._render(null));
+    // Meerdere move-events per frame samenvoegen tot één render (rAF-throttle).
+    let rafPending = false;
+    let pendingX = null;
+    const schedule = (x) => {
+      pendingX = x;
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => { rafPending = false; canvas._render(pendingX); });
+    };
+
+    canvas.addEventListener('pointermove', (e) => schedule(canvas._getCanvasX(e)));
+    canvas.addEventListener('pointerleave', () => schedule(null));
     canvas.addEventListener('touchmove', (e) => {
       e.preventDefault();
-      canvas._render(canvas._getCanvasX(e));
+      schedule(canvas._getCanvasX(e));
     }, { passive: false });
-    canvas.addEventListener('touchend', () => canvas._render(null));
+    canvas.addEventListener('touchend', () => schedule(null));
   }
 }
 

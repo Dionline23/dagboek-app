@@ -1,4 +1,4 @@
-const CACHE = 'dagboek-v28';
+const CACHE = 'dagboek-v29';
 const ASSETS = [
   './',
   './index.html',
@@ -27,11 +27,19 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Cache-first: app werkt volledig offline; nieuwe versies komen binnen via een nieuwe cache-naam.
+// Cache-first: app werkt volledig offline; nieuwe versies komen binnen via een
+// nieuwe cache-naam (atomische update). Cross-origin verzoeken laten we met rust,
+// en een mislukte navigatie valt terug op de gecachete app-shell.
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  if (new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
-    caches.match(e.request).then((hit) => hit || fetch(e.request))
+    caches.match(e.request).then((hit) =>
+      hit || fetch(e.request).catch(() => {
+        if (e.request.mode === 'navigate') return caches.match('./index.html');
+        return Response.error();
+      })
+    )
   );
 });
 

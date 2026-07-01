@@ -1,16 +1,40 @@
 // IndexedDB-helper: één record per dag, key = "YYYY-MM-DD"
 const DB_NAME = 'dagboek';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = 'dagen';
 
 let dbPromise = null;
+
+// Migraties draaien op volgorde van versie; elke stap gaat uit van de vorige.
+// Voeg voor een schemawijziging een nieuwe `if (oldVersion < N)`-blok toe en
+// verhoog DB_VERSION. Zo krijgen bestaande gebruikers de wijziging veilig mee.
+function migrateDb(db, tx, oldVersion) {
+  if (oldVersion < 1) {
+    db.createObjectStore(STORE, { keyPath: 'date' });
+  }
+  if (oldVersion < 2) {
+    // v2: bestaande records normaliseren zodat later toegevoegde velden bestaan.
+    const store = tx.objectStore(STORE);
+    store.openCursor().onsuccess = (ev) => {
+      const cur = ev.target.result;
+      if (!cur) return;
+      const rec = cur.value;
+      let changed = false;
+      if (rec.painDetails == null) { rec.painDetails = {}; changed = true; }
+      if (rec.done == null) { rec.done = {}; changed = true; }
+      if (rec.habits == null) { rec.habits = {}; changed = true; }
+      if (changed) cur.update(rec);
+      cur.continue();
+    };
+  }
+}
 
 function openDb() {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      req.result.createObjectStore(STORE, { keyPath: 'date' });
+    req.onupgradeneeded = (e) => {
+      migrateDb(req.result, req.transaction, e.oldVersion);
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
