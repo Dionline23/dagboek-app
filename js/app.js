@@ -266,8 +266,14 @@ function scheduleSave() {
 
 async function saveNow(silent = false) {
   clearTimeout(saveTimer);
-  await dbPutDay(currentRecord);
-  if (!silent) showToast('Opgeslagen ✓');
+  try {
+    await dbPutDay(currentRecord);
+    if (!silent) showToast('Opgeslagen ✓');
+  } catch (err) {
+    // bv. private mode of vol geheugen: meld het i.p.v. stil falen
+    console.error('Opslaan mislukt', err);
+    showToast('⚠️ Opslaan mislukt');
+  }
 }
 
 // ---- "Opgeslagen"-toast ----
@@ -1032,15 +1038,32 @@ function renderBestWorst(all) {
   }
   const best = [...scored].sort((a, b) => b.score - a.score).slice(0, 3);
   const worst = [...scored].sort((a, b) => a.score - b.score).slice(0, 3);
-  const mkList = (items) => items.map((it) =>
-    `<button type="button" class="bw-item" data-date="${it.date}"><span>${formatDate(it.date, false)}</span><span class="bw-score">${it.score}</span></button>`
-  ).join('');
-  wrap.innerHTML =
-    `<div class="bw-col"><div class="bw-head">😄 Beste</div>${mkList(best)}</div>` +
-    `<div class="bw-col"><div class="bw-head">😔 Zwaarste</div>${mkList(worst)}</div>`;
-  for (const btn of wrap.querySelectorAll('.bw-item')) {
-    btn.addEventListener('click', () => openDate(btn.dataset.date));
-  }
+  const mkCol = (title, items) => {
+    const col = document.createElement('div');
+    col.className = 'bw-col';
+    const head = document.createElement('div');
+    head.className = 'bw-head';
+    head.textContent = title;
+    col.appendChild(head);
+    for (const it of items) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'bw-item';
+      const dateEl = document.createElement('span');
+      dateEl.textContent = formatDate(it.date, false);
+      const scoreEl = document.createElement('span');
+      scoreEl.className = 'bw-score';
+      scoreEl.textContent = it.score;
+      btn.appendChild(dateEl);
+      btn.appendChild(scoreEl);
+      btn.addEventListener('click', () => openDate(it.date));
+      col.appendChild(btn);
+    }
+    return col;
+  };
+  wrap.innerHTML = '';
+  wrap.appendChild(mkCol('😄 Beste', best));
+  wrap.appendChild(mkCol('😔 Zwaarste', worst));
 }
 
 // ---- Pijn-heatmap (voor- en achterkant) ----
@@ -1146,15 +1169,63 @@ function switchTab(name) {
 }
 
 // ---- Pincode (app-slot) ----
-async function hashPin(pin) {
+const PIN_HASH_KEY = 'dagboek-pin';
+const PIN_SALT_KEY = 'dagboek-pin-salt';
+const PIN_ITERATIONS = 150000;
+
+function getPinSalt() {
+  let s = localStorage.getItem(PIN_SALT_KEY);
+  if (!s) {
+    const b = crypto.getRandomValues(new Uint8Array(16));
+    s = [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+    localStorage.setItem(PIN_SALT_KEY, s);
+  }
+  return s;
+}
+
+function hexToBytes(hex) {
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.substr(i * 2, 2), 16);
+  return out;
+}
+
+// Gesalte PBKDF2-afleiding (v2): duur genoeg om brute-force af te remmen.
+async function derivePin(pin) {
+  const salt = hexToBytes(getPinSalt());
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: PIN_ITERATIONS, hash: 'SHA-256' }, key, 256);
+  return [...new Uint8Array(bits)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Oud formaat (v1): ongesalte SHA-256 met vaste prefix. Alleen om bestaande
+// pincodes te herkennen en stilletjes te upgraden naar het nieuwe formaat.
+async function legacyHashPin(pin) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('dagboek:' + pin));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+async function setPin(pin) {
+  localStorage.setItem(PIN_HASH_KEY, await derivePin(pin));
+}
+
+// true als de pin klopt; upgradet een oude v1-hash transparant naar v2.
+async function verifyPin(pin) {
+  const stored = localStorage.getItem(PIN_HASH_KEY);
+  if (!stored) return false;
+  if ((await derivePin(pin)) === stored) return true;
+  if ((await legacyHashPin(pin)) === stored) {
+    await setPin(pin); // upgrade bij eerste juiste invoer
+    return true;
+  }
+  return false;
+}
+
 function refreshPinUI() {
-  const has = !!localStorage.getItem('dagboek-pin');
+  const has = !!localStorage.getItem(PIN_HASH_KEY);
   document.getElementById('pin-status').textContent = has
-    ? 'Pincode staat aan. De app vraagt erom bij openen.'
+    ? 'Pincode staat aan. De app vergrendelt bij openen en zodra hij naar de achtergrond gaat. Let op: dit is een drempel, geen versleuteling — je data staat onversleuteld op dit apparaat.'
     : 'Geen pincode ingesteld. Stel er een in om de app te vergrendelen.';
   document.getElementById('pin-set-row').classList.toggle('hidden', has);
   document.getElementById('btn-pin-remove').classList.toggle('hidden', !has);
@@ -1169,7 +1240,7 @@ function initPinUI() {
       showToast('Voer 4 cijfers in');
       return;
     }
-    localStorage.setItem('dagboek-pin', await hashPin(pin));
+    await setPin(pin);
     input.value = '';
     refreshPinUI();
     showToast('Pincode ingesteld 🔒');
@@ -1182,6 +1253,24 @@ function initPinUI() {
 
 let lockRemoveMode = false;
 let lockEntry = '';
+let pinFailCount = 0;
+let pinLockUntil = 0;
+
+function startPinLockCountdown() {
+  const err = document.getElementById('lock-error');
+  err.classList.remove('hidden');
+  const tick = () => {
+    const left = Math.ceil((pinLockUntil - Date.now()) / 1000);
+    if (left > 0) {
+      err.textContent = `Te veel pogingen. Wacht ${left}s.`;
+      setTimeout(tick, 500);
+    } else {
+      err.textContent = 'Onjuiste pincode';
+      err.classList.add('hidden');
+    }
+  };
+  tick();
+}
 
 function openLockScreen(removeMode = false) {
   lockRemoveMode = removeMode;
@@ -1218,6 +1307,7 @@ function buildKeypad() {
 }
 
 async function onKeypad(k) {
+  if (pinLockUntil > Date.now()) return; // tijdelijk vergrendeld na te veel pogingen
   if (k === '⌫') {
     lockEntry = lockEntry.slice(0, -1);
   } else if (k && lockEntry.length < 4) {
@@ -1225,19 +1315,28 @@ async function onKeypad(k) {
   }
   updateLockDots();
   if (lockEntry.length === 4) {
-    const ok = (await hashPin(lockEntry)) === localStorage.getItem('dagboek-pin');
+    const ok = await verifyPin(lockEntry);
     if (ok) {
+      pinFailCount = 0;
       if (lockRemoveMode) {
-        localStorage.removeItem('dagboek-pin');
+        localStorage.removeItem(PIN_HASH_KEY);
         refreshPinUI();
         showToast('Pincode verwijderd');
       }
       closeLockScreen();
     } else {
-      const err = document.getElementById('lock-error');
-      err.classList.remove('hidden');
+      pinFailCount++;
       lockEntry = '';
       updateLockDots();
+      if (pinFailCount >= 5) {
+        pinFailCount = 0;
+        pinLockUntil = Date.now() + 30000; // 30s afkoelen
+        startPinLockCountdown();
+      } else {
+        const err = document.getElementById('lock-error');
+        err.textContent = 'Onjuiste pincode';
+        err.classList.remove('hidden');
+      }
     }
   }
 }
@@ -1496,9 +1595,14 @@ async function init() {
     if (waitingWorker) waitingWorker.postMessage({ type: 'SKIP_WAITING' });
   });
 
-  // bij terugkeren: nieuwe dag?
+  // bij achtergrond: vergrendel meteen zodat terugkeren om de pincode vraagt
   document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'hidden') {
+      if (localStorage.getItem(PIN_HASH_KEY)) openLockScreen(false);
+      return;
+    }
     if (document.visibilityState === 'visible') {
+      // bij terugkeren: nieuwe dag?
       if (currentDate < todayStr() && document.getElementById('not-today-banner').classList.contains('hidden')) {
         currentDate = todayStr();
         await loadCurrent();

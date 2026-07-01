@@ -1,4 +1,4 @@
-const CACHE = 'dagboek-v25';
+const CACHE = 'dagboek-v26';
 const ASSETS = [
   './',
   './index.html',
@@ -36,15 +36,4 @@ self.addEventListener('fetch', (e) => {
 // "Vernieuwen"-knop in de app stuurt dit bericht zodat de nieuwe versie direct actief wordt
 self.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
-});
-
-// Tik op een herinnering opent/focust de app
-self.addEventListener('notificationclick', (e) => {
-  e.notification.close();
-  e.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then((cl) => {
-      for (const c of cl) { if ('focus' in c) return c.focus(); }
-      if (self.clients.openWindow) return self.clients.openWindow('./');
-    })
-  );
 });

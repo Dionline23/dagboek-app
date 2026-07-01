@@ -202,23 +202,26 @@ function drawLineChart(canvas, series, opts) {
 
   render(null);
 
-  // Event-listeners éénmalig instellen
+  // Bewaar de actuele render + x-mapping op de canvas, zodat opnieuw tekenen
+  // (periodewissel, thema, nieuwe data) de listeners van verse data voorziet.
+  canvas._render = render;
+  canvas._getCanvasX = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    return (clientX - rect.left) * (cssWidth / rect.width);
+  };
+
+  // Event-listeners éénmalig instellen; ze verwijzen altijd naar de laatste render.
   if (!canvas._interactSetup) {
     canvas._interactSetup = true;
 
-    const getCanvasX = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      return (clientX - rect.left) * (cssWidth / rect.width);
-    };
-
-    canvas.addEventListener('pointermove', (e) => render(getCanvasX(e)));
-    canvas.addEventListener('pointerleave', () => render(null));
+    canvas.addEventListener('pointermove', (e) => canvas._render(canvas._getCanvasX(e)));
+    canvas.addEventListener('pointerleave', () => canvas._render(null));
     canvas.addEventListener('touchmove', (e) => {
       e.preventDefault();
-      render(getCanvasX(e));
+      canvas._render(canvas._getCanvasX(e));
     }, { passive: false });
-    canvas.addEventListener('touchend', () => render(null));
+    canvas.addEventListener('touchend', () => canvas._render(null));
   }
 }
 
