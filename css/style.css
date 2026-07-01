@@ -929,6 +929,8 @@ button.tag-chip.clickable { cursor: pointer; }
   transition: fill 0.12s;
 }
 .bodymap .region.sel { fill: #e8788f; stroke: #d3667c; }
+/* duidelijke focusindicator bij toetsenbordbediening (outline rendert niet altijd op SVG) */
+.bodymap .region:focus-visible { stroke: var(--accent); stroke-width: 2.5; outline: none; }
 .heatmap .region { cursor: default; }
 .body-silhouette {
   fill: color-mix(in srgb, var(--accent) 14%, var(--card));

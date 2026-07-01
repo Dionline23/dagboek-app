@@ -179,8 +179,13 @@ function renderPainHeatmap(all) {
     const clone = src.cloneNode(true);
     clone.removeAttribute('id');
     clone.classList.add('heatmap');
+    clone.setAttribute('aria-hidden', 'true'); // decoratief: niet aankondigen
     for (const sh of clone.querySelectorAll('.region')) {
       sh.classList.remove('sel');
+      // niet interactief in de heatmap
+      sh.removeAttribute('tabindex');
+      sh.removeAttribute('role');
+      sh.removeAttribute('aria-pressed');
       const h = heat[sh.dataset.region] || 0;
       sh.style.fill = (h > 0 && max > 0) ? heatColor(h / max) : 'var(--surface-2)';
       sh.style.stroke = 'var(--border)';

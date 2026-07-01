@@ -138,7 +138,9 @@ function buildKeypad() {
   for (const k of keys) {
     const btn = document.createElement('button');
     btn.className = 'key';
-    if (k === '') { btn.classList.add('key-empty'); btn.disabled = true; }
+    if (k === '') { btn.classList.add('key-empty'); btn.disabled = true; btn.setAttribute('aria-hidden', 'true'); }
+    else if (k === '⌫') btn.setAttribute('aria-label', 'Wissen');
+    else btn.setAttribute('aria-label', k);
     btn.textContent = k;
     btn.addEventListener('click', () => onKeypad(k));
     pad.appendChild(btn);

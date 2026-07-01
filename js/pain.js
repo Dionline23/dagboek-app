@@ -13,6 +13,13 @@ export function initBodyMap() {
   buildBodyMaps(); // vult de SVG-containers uit data (js/bodymap.js)
   for (const shape of document.querySelectorAll('#tab-pijn .bodymap .region')) {
     shape.addEventListener('click', () => toggleRegion(shape.dataset.region));
+    // toetsenbord: Enter/Spatie schakelt de plek aan/uit
+    shape.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        toggleRegion(shape.dataset.region);
+      }
+    });
   }
 }
 
@@ -29,7 +36,9 @@ function toggleRegion(id) {
 function renderBodyMap() {
   const locs = currentRecord.painLocations || [];
   for (const shape of document.querySelectorAll('#tab-pijn .bodymap .region')) {
-    shape.classList.toggle('sel', locs.includes(shape.dataset.region));
+    const sel = locs.includes(shape.dataset.region);
+    shape.classList.toggle('sel', sel);
+    shape.setAttribute('aria-pressed', sel ? 'true' : 'false');
   }
   const text = document.getElementById('pain-locations-text');
   text.textContent = locs.length
