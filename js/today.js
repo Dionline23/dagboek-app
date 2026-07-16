@@ -9,6 +9,7 @@ import {
   hasContent, extractTags,
 } from './logic.js';
 import { dbGetDay, dbGetAllDays } from './db.js';
+import { confettiBurst } from './effects.js';
 
 // ---- Stemming ----
 export const MOODS = [
@@ -42,6 +43,61 @@ export function buildMoodRow() {
 function renderMood() {
   for (const btn of document.getElementById('mood-row').children) {
     btn.classList.toggle('selected', Number(btn.dataset.value) === currentRecord.mood);
+  }
+}
+
+// ---- Emoties (multi-select, onder het journal) ----
+export const EMOTIONS = [
+  { id: 'blij', e: '😄', l: 'Blij', tone: 'pos' },
+  { id: 'geliefd', e: '🥰', l: 'Geliefd', tone: 'pos' },
+  { id: 'dankbaar', e: '🙏', l: 'Dankbaar', tone: 'pos' },
+  { id: 'trots', e: '💪', l: 'Trots', tone: 'pos' },
+  { id: 'energiek', e: '⚡', l: 'Energiek', tone: 'pos' },
+  { id: 'rustig', e: '😌', l: 'Rustig', tone: 'pos' },
+  { id: 'hoopvol', e: '🌟', l: 'Hoopvol', tone: 'pos' },
+  { id: 'vlak', e: '😐', l: 'Vlak', tone: 'neutral' },
+  { id: 'moe', e: '😴', l: 'Moe', tone: 'neg' },
+  { id: 'gestrest', e: '😰', l: 'Gestrest', tone: 'neg' },
+  { id: 'bezorgd', e: '😟', l: 'Bezorgd', tone: 'neg' },
+  { id: 'verdrietig', e: '😢', l: 'Verdrietig', tone: 'neg' },
+  { id: 'boos', e: '😠', l: 'Boos', tone: 'neg' },
+  { id: 'eenzaam', e: '🥺', l: 'Eenzaam', tone: 'neg' },
+  { id: 'overweldigd', e: '🌫️', l: 'Overweldigd', tone: 'neg' },
+];
+
+export function buildEmotionChips() {
+  const wrap = document.getElementById('emotions-list');
+  wrap.innerHTML = '';
+  for (const em of EMOTIONS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'emotion-chip';
+    btn.dataset.emotion = em.id;
+    btn.dataset.tone = em.tone;
+    btn.innerHTML = `<span class="em-emoji">${em.e}</span><span class="em-label">${em.l}</span>`;
+    btn.setAttribute('aria-pressed', 'false');
+    btn.addEventListener('click', () => {
+      if (!Array.isArray(currentRecord.emotions)) currentRecord.emotions = [];
+      const i = currentRecord.emotions.indexOf(em.id);
+      if (i >= 0) currentRecord.emotions.splice(i, 1);
+      else currentRecord.emotions.push(em.id);
+      renderEmotions();
+      // bounce-animatie op de aangetikte chip
+      btn.classList.remove('bounce');
+      void btn.offsetWidth;
+      btn.classList.add('bounce');
+      saveNow(true);
+    });
+    wrap.appendChild(btn);
+  }
+}
+
+function renderEmotions() {
+  const sel = currentRecord.emotions || [];
+  for (const btn of document.querySelectorAll('#emotions-list .emotion-chip')) {
+    const on = sel.includes(btn.dataset.emotion);
+    btn.classList.toggle('selected', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   }
 }
 
@@ -139,9 +195,15 @@ const TODAY_DONE_KEYS = ['morning', 'evening', 'gratitude', 'journal', 'exercise
 
 function toggleDone(key) {
   if (!currentRecord.done) currentRecord.done = {};
+  const before = TODAY_DONE_KEYS.filter((k) => currentRecord.done[k]).length;
   currentRecord.done[key] = !currentRecord.done[key];
+  const after = TODAY_DONE_KEYS.filter((k) => currentRecord.done[k]).length;
   renderDone();
   saveNow();
+  // 🎉 alles afgerond met deze tik → confetti (alleen bij echte voltooiing)
+  if (after === TODAY_DONE_KEYS.length && before === TODAY_DONE_KEYS.length - 1) {
+    confettiBurst();
+  }
 }
 
 export function renderDone() {
@@ -314,6 +376,77 @@ export function initJournalInput() {
   });
 }
 
+// ---- Dicteren in het journal (Web Speech API, alleen dit blok) ----
+let recognition = null;
+let dictating = false;
+// journal-tekst op het moment dat de (interim)zin begon, zodat we live kunnen tonen
+let dictBase = '';
+
+function setDictationUI(on) {
+  dictating = on;
+  const btn = document.getElementById('btn-dictate');
+  const status = document.getElementById('dictate-status');
+  btn.classList.toggle('recording', on);
+  btn.setAttribute('aria-label', on ? 'Stop met dicteren' : 'Dicteer je journal');
+  btn.title = on ? 'Stop met dicteren' : 'Dicteer je journal';
+  status.classList.toggle('hidden', !on);
+}
+
+function appendDictation(text, isFinal) {
+  const ta = document.getElementById('journal');
+  const sep = dictBase && !/\s$/.test(dictBase) ? ' ' : '';
+  const merged = dictBase + sep + text.trim();
+  ta.value = merged;
+  if (isFinal) {
+    currentRecord.journal = merged;
+    dictBase = merged;
+    renderJournalTags();
+    scheduleSave();
+  }
+}
+
+export function initDictation() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById('btn-dictate');
+  if (!SR) { btn.classList.add('hidden'); return; }
+
+  btn.addEventListener('click', () => {
+    if (dictating) { recognition.stop(); return; }
+    recognition = new SR();
+    recognition.lang = 'nl-NL';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    dictBase = document.getElementById('journal').value;
+
+    recognition.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) appendDictation(r[0].transcript, true);
+        else interim += r[0].transcript;
+      }
+      if (interim) appendDictation(interim, false);
+    };
+    recognition.onerror = (e) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        showToast('🎤 Geen microfoontoegang');
+      } else if (e.error === 'no-speech') {
+        showToast('🎤 Geen spraak gehoord');
+      } else if (e.error === 'network') {
+        showToast('🎤 Dicteren vereist internet');
+      }
+    };
+    recognition.onend = () => setDictationUI(false);
+
+    try {
+      recognition.start();
+      setDictationUI(true);
+    } catch (err) {
+      showToast('🎤 Dicteren kon niet starten');
+    }
+  });
+}
+
 // ---- Big Event (grote gebeurtenis; optioneel, met + en bevestigen) ----
 function renderBigEvent() {
   const val = (currentRecord.bigEvent || '').trim();
@@ -437,10 +570,24 @@ export function initHabitsManager() {
   });
 }
 
+// ---- Streak-mijlpalen: één keer vieren per mijlpaal ----
+const STREAK_MILESTONES = [7, 30, 100, 365];
+
+function celebrateStreakMilestone(streak) {
+  const milestone = STREAK_MILESTONES.filter((m) => streak >= m).pop();
+  if (!milestone) return;
+  const done = parseInt(localStorage.getItem(LS.streakCelebrated) || '0', 10) || 0;
+  if (milestone <= done) return;
+  localStorage.setItem(LS.streakCelebrated, String(milestone));
+  confettiBurst();
+  showToast(`🔥 ${milestone} dagen op rij — geweldig!`);
+}
+
 // ---- Render van de hele Vandaag-tab ----
 export async function renderVandaag() {
   const streak = await computeStreak();
   streakText = streak >= 2 ? `🔥 ${streak} dagen op rij` : streak === 1 ? '🔥 1 dag' : '';
+  celebrateStreakMilestone(streak);
   const isToday = currentDate === todayStr();
   document.getElementById('header-date').textContent = relativeDayLabel(currentDate);
   const banner = document.getElementById('not-today-banner');
@@ -459,6 +606,7 @@ export async function renderVandaag() {
   renderGratitude();
   document.getElementById('journal').value = currentRecord.journal || '';
   renderJournalTags();
+  renderEmotions();
   renderBigEvent();
   renderExercise();
   renderHabits();

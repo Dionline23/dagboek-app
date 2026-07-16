@@ -16,6 +16,7 @@ export const LS = {
   goalExercise: 'dagboek-goal-exercise',
   gratitudeCount: 'dagboek-gratitude-count',
   onboarded: 'dagboek-onboarded',
+  streakCelebrated: 'dagboek-streak-celebrated',
 };
 
 // ---- State (live bindings) ----

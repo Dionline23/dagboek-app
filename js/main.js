@@ -6,9 +6,9 @@ import {
 } from './core.js';
 import { todayStr, addDays } from './logic.js';
 import {
-  buildMoodRow, buildExercisePresets, buildGratitude, initGratitudeStepper,
-  initWritingHelp, initHabitsManager, initJournalInput, initExerciseInput,
-  initDoneButtons, initBigEvent, renderVandaag,
+  buildMoodRow, buildEmotionChips, buildExercisePresets, buildGratitude,
+  initGratitudeStepper, initWritingHelp, initHabitsManager, initJournalInput,
+  initExerciseInput, initDoneButtons, initBigEvent, initDictation, renderVandaag,
 } from './today.js';
 import { initBodyMap, renderPijn } from './pain.js';
 import { renderGeschiedenis, setTagFilter, calPrevMonth, calNextMonth } from './history.js';
@@ -46,7 +46,9 @@ async function init() {
   initDoneButtons();
 
   buildGratitude();
+  buildEmotionChips();
   initJournalInput();
+  initDictation();
   initBigEvent();
   initExerciseInput();
 

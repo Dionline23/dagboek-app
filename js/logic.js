@@ -53,7 +53,7 @@ function hasContent(r) {
     painRepresentative(r) != null || r.exerciseMinutes != null ||
     Object.values(r.habits || {}).some(Boolean) ||
     (r.painLocations || []).length > 0 || (r.journal || '').trim() !== '' ||
-    (r.bigEvent || '').trim() !== '' ||
+    (r.bigEvent || '').trim() !== '' || (r.emotions || []).length > 0 ||
     (r.gratitude || []).some((g) => g && g.trim() !== '');
 }
 
@@ -73,6 +73,7 @@ function normalizeDay(r) {
     gratitude: Array.isArray(r.gratitude) ? r.gratitude : ['', '', ''],
     journal: r.journal ?? '',
     bigEvent: r.bigEvent ?? '',
+    emotions: Array.isArray(r.emotions) ? r.emotions : [],
     exerciseMinutes: r.exerciseMinutes ?? null,
     habits: (r.habits && typeof r.habits === 'object') ? r.habits : {},
     painMorning: r.painMorning ?? null,
@@ -167,6 +168,22 @@ function computeRegionStats(all) {
   return stats;
 }
 
+// ---- Meest gevoelde emoties (voor Inzichten) ----
+// Telt hoe vaak elke emotie is aangetikt over alle dagen; geeft top-N terug
+// als [{ id, count }], aflopend gesorteerd. Pure functie → testbaar.
+function topEmotions(all, maxN = 5) {
+  const counts = {};
+  for (const day of all) {
+    for (const id of day.emotions || []) {
+      if (typeof id === 'string') counts[id] = (counts[id] || 0) + 1;
+    }
+  }
+  return Object.entries(counts)
+    .map(([id, count]) => ({ id, count }))
+    .sort((a, b) => b.count - a.count || a.id.localeCompare(b.id))
+    .slice(0, maxN);
+}
+
 // ---- Journal #tags ----
 function extractTags(text) {
   const out = [];
@@ -211,6 +228,9 @@ function sanitizeDay(day) {
     gratitude: Array.isArray(day.gratitude) ? day.gratitude.map(importStr) : [],
     journal: importStr(day.journal),
     bigEvent: importStr(day.bigEvent),
+    emotions: Array.isArray(day.emotions)
+      ? day.emotions.filter((x) => typeof x === 'string')
+      : [],
     exerciseMinutes: importNum(day.exerciseMinutes, 0, 1440),
     habits: importBoolMap(day.habits),
     painMorning: importNum(day.painMorning, 0, 10),
@@ -248,6 +268,6 @@ export {
   DAGEN, MAANDEN,
   toISODate, todayStr, addDays, monthsAgo, formatDate, relativeDayLabel,
   painRepresentative, hasContent, extractTags, normalizeDay, computeRegionStats,
-  mondayOf, bucketsFor,
+  mondayOf, bucketsFor, topEmotions,
   importNum, importStr, importBoolMap, sanitizeDay,
 };
