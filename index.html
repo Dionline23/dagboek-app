@@ -161,10 +161,20 @@
       <div class="card" data-done-card="journal">
         <div class="card-head">
           <h2>📓 Journal</h2>
-          <button type="button" class="done-btn" data-done="journal">Klaar</button>
+          <div class="card-head-actions">
+            <button type="button" id="btn-dictate" class="dictate-btn" title="Dicteer je journal" aria-label="Dicteer je journal">🎤</button>
+            <button type="button" class="done-btn" data-done="journal">Klaar</button>
+          </div>
         </div>
         <textarea id="journal" rows="5" placeholder="Schrijf hier vrijuit over je dag... Tip: gebruik #tags"></textarea>
+        <p class="dictate-status hidden" id="dictate-status">🎙️ Luistert… tik op de microfoon om te stoppen</p>
         <div class="tag-chips" id="journal-tags"></div>
+      </div>
+
+      <div class="card" id="emotions-card">
+        <h2>💭 Emoties</h2>
+        <p class="hint">Wat voelde je vandaag? Tik aan wat past.</p>
+        <div id="emotions-list" class="emotions-grid"></div>
       </div>
 
       <div class="card" id="bigevent-card">
@@ -360,6 +370,12 @@
       <div class="card">
         <h2>Sportminuten</h2>
         <canvas id="chart-exercise" class="chart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>💭 Meest gevoeld</h2>
+        <p class="hint">Je vaakst aangetikte emoties.</p>
+        <div id="top-emotions"></div>
       </div>
 
       <div class="card" id="smart-card">

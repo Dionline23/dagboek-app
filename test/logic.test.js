@@ -136,6 +136,31 @@ test('bucketsFor(month) geeft 12 maanden met juiste dag-aantallen en labels', ()
   assert.equal(feb.days.length, 28);          // 2026 geen schrikkeljaar
 });
 
+test('normalizeDay en sanitizeDay behandelen emotions', () => {
+  assert.deepEqual(L.normalizeDay({ date: '2026-06-01' }).emotions, []);
+  assert.deepEqual(L.normalizeDay({ date: '2026-06-01', emotions: ['blij'] }).emotions, ['blij']);
+  assert.deepEqual(L.sanitizeDay({ date: '2026-06-01', emotions: ['blij', 42, 'moe'] }).emotions, ['blij', 'moe']);
+  assert.deepEqual(L.sanitizeDay({ date: '2026-06-01', emotions: 'geen array' }).emotions, []);
+});
+
+test('hasContent telt een dag met alleen emoties mee', () => {
+  assert.equal(L.hasContent({ emotions: ['blij'] }), true);
+  assert.equal(L.hasContent({ emotions: [] }), false);
+});
+
+test('topEmotions telt en sorteert emotie-frequenties', () => {
+  const all = [
+    { emotions: ['blij', 'moe'] },
+    { emotions: ['blij'] },
+    { emotions: ['blij', 'gestrest', 'moe'] },
+    { emotions: [] },
+    {},
+  ];
+  const top = L.topEmotions(all, 2);
+  assert.deepEqual(top, [{ id: 'blij', count: 3 }, { id: 'moe', count: 2 }]);
+  assert.deepEqual(L.topEmotions([], 5), []);
+});
+
 test('sanitizeDay strandt HTML/ongeldige waarden en dwingt types af', () => {
   const dirty = {
     date: '2026-06-01',

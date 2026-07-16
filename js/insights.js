@@ -3,8 +3,9 @@
 import { emptyState, openDate, getGoal } from './core.js';
 import {
   todayStr, addDays, painRepresentative, hasContent, formatDate,
-  computeRegionStats, bucketsFor,
+  computeRegionStats, bucketsFor, topEmotions,
 } from './logic.js';
+import { EMOTIONS } from './today.js';
 import { dbGetAllDays } from './db.js';
 import { drawLineChart } from './charts.js';
 import { REGION_LABELS, PAIN_TYPES } from './bodymap.js';
@@ -117,6 +118,38 @@ function renderSmartInsights(all) {
     el.innerHTML = `<span class="ins-icon">${ins.icon}</span><span class="ins-text"></span>`;
     el.querySelector('.ins-text').textContent = ins.text;
     wrap.appendChild(el);
+  }
+}
+
+// ---- Meest gevoelde emoties ----
+function renderTopEmotions(all) {
+  const wrap = document.getElementById('top-emotions');
+  const top = topEmotions(all, 5);
+  if (!top.length) {
+    wrap.innerHTML = emptyState('💭', 'Nog geen emoties aangetikt', 'Tik op Vandaag onder je journal aan wat je voelde.');
+    return;
+  }
+  const max = top[0].count;
+  wrap.innerHTML = '';
+  for (const { id, count } of top) {
+    const em = EMOTIONS.find((e) => e.id === id) || { e: '💭', l: id };
+    const row = document.createElement('div');
+    row.className = 'emo-row';
+    const label = document.createElement('span');
+    label.className = 'emo-label';
+    label.textContent = `${em.e} ${em.l}`;
+    const bar = document.createElement('span');
+    bar.className = 'emo-bar';
+    const fill = document.createElement('i');
+    fill.style.width = `${Math.max(8, Math.round((count / max) * 100))}%`;
+    bar.appendChild(fill);
+    const num = document.createElement('span');
+    num.className = 'emo-count';
+    num.textContent = `${count}×`;
+    row.appendChild(label);
+    row.appendChild(bar);
+    row.appendChild(num);
+    wrap.appendChild(row);
   }
 }
 
@@ -278,6 +311,7 @@ export async function renderInzichten() {
   const today = todayStr();
   weekStats(byDate, today);
   renderSmartInsights(all);
+  renderTopEmotions(all);
   renderBestWorst(all);
   renderPainHeatmap(all);
 

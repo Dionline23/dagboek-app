@@ -4,13 +4,16 @@ import {
   todayStr, toISODate, MAANDEN, formatDate, hasContent, extractTags, painRepresentative,
 } from './logic.js';
 import { dbGetAllDays } from './db.js';
-import { MOODS } from './today.js';
+import { MOODS, EMOTIONS } from './today.js';
 
 function matchesSearch(rec, term) {
   if (!term) return true;
+  const emotionLabels = (rec.emotions || [])
+    .map((id) => (EMOTIONS.find((e) => e.id === id) || {}).l || id);
   const haystack = [
     rec.journal || '',
     rec.bigEvent || '',
+    emotionLabels.join(' '),
     (rec.gratitude || []).join(' '),
     rec.painNote || '',
     formatDate(rec.date),
@@ -134,6 +137,11 @@ export async function renderGeschiedenis() {
     if (rec.exerciseMinutes != null && rec.exerciseMinutes > 0) badges.push(`🏃 ${rec.exerciseMinutes}m`);
 
     if (rec.bigEvent && rec.bigEvent.trim()) badges.push('🌟');
+    // max 3 emotie-emoji als badge
+    for (const id of (rec.emotions || []).slice(0, 3)) {
+      const em = EMOTIONS.find((e) => e.id === id);
+      if (em) badges.push(em.e);
+    }
 
     const summaryParts = [];
     if (rec.bigEvent && rec.bigEvent.trim()) summaryParts.push('🌟 ' + rec.bigEvent.trim());
