@@ -872,6 +872,9 @@ button.tag-chip.clickable { cursor: pointer; }
 /* Gewoontes */
 #habits-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .habit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--bg);
@@ -888,6 +891,21 @@ button.tag-chip.clickable { cursor: pointer; }
   color: #fff;
 }
 .habit-chip.done::before { content: '✓ '; }
+.habit-freq {
+  font-size: 0.7rem;
+  font-weight: 500;
+  opacity: 0.65;
+  background: rgba(0,0,0,.06);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+.habit-chip.done .habit-freq { background: rgba(255,255,255,.25); opacity: 0.9; }
+
+/* Gewoonte toevoegen-rij */
+.habit-add-row { display: flex; gap: 8px; align-items: center; }
+.habit-add-row input { flex: 1; margin: 0; }
+.habit-add-row .manage-freq { margin-right: 0; }
+.habit-add-row .btn { flex: 0 0 auto; padding: 11px 14px; }
 
 /* Beheer-rijen (gewoontes verwijderen) */
 .manage-row {
@@ -899,6 +917,21 @@ button.tag-chip.clickable { cursor: pointer; }
   font-size: 0.9rem;
 }
 .manage-row:last-child { border-bottom: none; }
+.manage-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.manage-freq {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  margin-right: 8px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 90px;
+}
 .manage-del {
   border: none;
   background: none;

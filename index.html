@@ -419,9 +419,16 @@
       <div class="card">
         <h2>✅ Gewoontes</h2>
         <p class="hint">Dagelijkse gewoontes die je wilt afvinken op Vandaag.</p>
-        <div class="pin-set-row">
+        <div class="habit-add-row">
           <input type="text" id="habit-new" maxlength="40" placeholder="Bijv. Mediteren, 10.000 stappen...">
-          <button id="btn-habit-add" class="btn">Toevoegen</button>
+          <select id="habit-new-freq" class="manage-freq" aria-label="Frequentie">
+            <option value="daily">Dagelijks</option>
+            <option value="other_day">Om de dag</option>
+            <option value="3pw">3×/week</option>
+            <option value="2pw">2×/week</option>
+            <option value="1pw">1×/week</option>
+          </select>
+          <button id="btn-habit-add" class="btn">+</button>
         </div>
         <div id="habits-manage"></div>
       </div>
