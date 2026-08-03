@@ -16,7 +16,9 @@ function addDays(dateStr, n) {
 }
 
 function monthsAgo(y, m, d, n) {
-  return toISODate(new Date(y, m - 1 - n, d));
+  const targetMonth = m - 1 - n;
+  const lastDay = new Date(y, targetMonth + 1, 0).getDate();
+  return toISODate(new Date(y, targetMonth, Math.min(d, lastDay)));
 }
 
 const DAGEN = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];

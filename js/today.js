@@ -191,7 +191,7 @@ async function renderMissedPrompt() {
 }
 
 // ---- "Klaar"-afvinkknoppen per onderdeel ----
-const TODAY_DONE_KEYS = ['morning', 'evening', 'gratitude', 'journal', 'exercise'];
+const TODAY_DONE_KEYS = ['morning', 'evening', 'gratitude', 'journal', 'exercise', 'pain'];
 
 function toggleDone(key) {
   if (!currentRecord.done) currentRecord.done = {};
@@ -491,7 +491,34 @@ export function initBigEvent() {
   });
 }
 
-// ---- Gewoontes (aanpasbaar) ----
+// ---- Gewoontes (aanpasbaar, met frequentie) ----
+const FREQ_OPTIONS = [
+  { value: 'daily',     label: 'Dagelijks' },
+  { value: 'other_day', label: 'Om de dag' },
+  { value: '3pw',       label: '3×/week' },
+  { value: '2pw',       label: '2×/week' },
+  { value: '1pw',       label: '1×/week' },
+];
+
+function freqLabel(freq) {
+  const opt = FREQ_OPTIONS.find((o) => o.value === freq);
+  return opt && freq !== 'daily' ? opt.label : '';
+}
+
+function buildFreqSelect(selected, cls) {
+  const sel = document.createElement('select');
+  sel.className = cls;
+  sel.setAttribute('aria-label', 'Frequentie');
+  for (const o of FREQ_OPTIONS) {
+    const opt = document.createElement('option');
+    opt.value = o.value;
+    opt.textContent = o.label;
+    if ((selected || 'daily') === o.value) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  return sel;
+}
+
 function getHabits() {
   try { return JSON.parse(localStorage.getItem(LS.habits)) || []; } catch { return []; }
 }
@@ -511,7 +538,16 @@ function renderHabits() {
     btn.type = 'button';
     btn.className = 'habit-chip';
     btn.classList.toggle('done', !!currentRecord.habits[h.id]);
-    btn.textContent = h.name;
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = h.name;
+    btn.appendChild(nameSpan);
+    const fl = freqLabel(h.freq);
+    if (fl) {
+      const freqSpan = document.createElement('span');
+      freqSpan.className = 'habit-freq';
+      freqSpan.textContent = fl;
+      btn.appendChild(freqSpan);
+    }
     btn.addEventListener('click', () => {
       currentRecord.habits[h.id] = !currentRecord.habits[h.id];
       btn.classList.toggle('done', !!currentRecord.habits[h.id]);
@@ -529,7 +565,14 @@ function renderHabitsManager() {
     const row = document.createElement('div');
     row.className = 'manage-row';
     const name = document.createElement('span');
+    name.className = 'manage-name';
     name.textContent = h.name;
+    const freqSel = buildFreqSelect(h.freq, 'manage-freq');
+    freqSel.addEventListener('change', () => {
+      const arr = getHabits();
+      const found = arr.find((x) => x.id === h.id);
+      if (found) { found.freq = freqSel.value; saveHabits(arr); }
+    });
     const del = document.createElement('button');
     del.type = 'button';
     del.className = 'manage-del';
@@ -546,6 +589,7 @@ function renderHabitsManager() {
       });
     });
     row.appendChild(name);
+    row.appendChild(freqSel);
     row.appendChild(del);
     wrap.appendChild(row);
   }
@@ -557,8 +601,9 @@ export function initHabitsManager() {
     const input = document.getElementById('habit-new');
     const name = input.value.trim();
     if (!name) return;
+    const freq = document.getElementById('habit-new-freq').value || 'daily';
     const habits = getHabits();
-    habits.push({ id: 'h' + Date.now(), name });
+    habits.push({ id: 'h' + Date.now(), name, freq });
     saveHabits(habits);
     input.value = '';
     renderHabitsManager();

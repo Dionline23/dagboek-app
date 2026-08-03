@@ -65,7 +65,11 @@ async function init() {
     if (target) openDate(target);
   });
 
-  document.getElementById('history-search').addEventListener('input', () => renderGeschiedenis());
+  let searchDebounce = null;
+  document.getElementById('history-search').addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => renderGeschiedenis(), 300);
+  });
   document.getElementById('history-filter-clear').addEventListener('click', () => setTagFilter(null));
   document.getElementById('cal-prev').addEventListener('click', () => calPrevMonth());
   document.getElementById('cal-next').addEventListener('click', () => calNextMonth());

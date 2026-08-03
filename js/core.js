@@ -90,8 +90,11 @@ export function confirmDialog({ title = 'Bevestigen', message = '', confirmText 
     const cleanup = (val) => {
       ov.classList.add('hidden');
       c.onclick = null; cancel.onclick = null; ov.onclick = null;
+      document.removeEventListener('keydown', onKey);
       resolve(val);
     };
+    const onKey = (e) => { if (e.key === 'Escape') cleanup(false); };
+    document.addEventListener('keydown', onKey);
     c.onclick = () => cleanup(true);
     cancel.onclick = () => cleanup(false);
     ov.onclick = (e) => { if (e.target === ov) cleanup(false); };

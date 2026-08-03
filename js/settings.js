@@ -208,9 +208,7 @@ function setTheme(theme) {
 }
 
 export function initThemeUI() {
-  const cur = getTheme();
-  document.documentElement.dataset.theme = cur;
-  setTheme(cur);
+  setTheme(getTheme());
   document.getElementById('theme-segment').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;

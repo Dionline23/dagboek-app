@@ -247,7 +247,13 @@ function showRegionStats(id, stats) {
   panel.appendChild(grid);
 }
 
+let lastHeatHash = null;
+
 function renderPainHeatmap(all) {
+  const hash = all.map((d) => d.date + (d.painLocations || []).join(',') + JSON.stringify(d.painDetails || {})).join('|');
+  if (hash === lastHeatHash) return;
+  lastHeatHash = hash;
+
   // heat = som van pijnintensiteit per plek over alle dagen
   // (vaker aangetikt → meer optellingen, hoger cijfer → grotere optelling)
   const heat = {};

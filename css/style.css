@@ -881,6 +881,9 @@ button.tag-chip.clickable { cursor: pointer; }
 /* Gewoontes */
 #habits-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .habit-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--bg);
@@ -889,6 +892,29 @@ button.tag-chip.clickable { cursor: pointer; }
   font-size: 0.85rem;
   font-weight: 600;
   padding: 8px 14px;
+  cursor: pointer;
+}
+.habit-freq {
+  font-size: 0.7rem;
+  font-weight: 400;
+  opacity: 0.7;
+}
+.habit-add-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.habit-add-row input { flex: 1; min-width: 0; }
+.habit-freq-sel {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
   cursor: pointer;
 }
 .habit-chip.done {
@@ -908,6 +934,17 @@ button.tag-chip.clickable { cursor: pointer; }
   font-size: 0.9rem;
 }
 .manage-row:last-child { border-bottom: none; }
+.manage-name { flex: 1; font-size: 0.9rem; }
+.manage-freq {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
 .manage-del {
   border: none;
   background: none;

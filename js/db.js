@@ -37,7 +37,7 @@ function openDb() {
       migrateDb(req.result, req.transaction, e.oldVersion);
     };
     req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onerror = () => { dbPromise = null; reject(req.error); };
   });
   return dbPromise;
 }
