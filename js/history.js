@@ -67,7 +67,8 @@ function renderCalendar() {
     cell.innerHTML = `<span class="n">${d}</span>`;
     const rec = calRecords.get(date);
     if (rec) {
-      const sc = rec.eveningScore != null ? rec.eveningScore : rec.morningScore;
+      const _scores = [rec.morningScore, rec.eveningScore].filter((v) => v != null);
+      const sc = _scores.length ? _scores.reduce((a, b) => a + b, 0) / _scores.length : null;
       if (sc != null) {
         cell.style.background = scoreColor(sc);
         cell.classList.add('has-score');
@@ -130,8 +131,11 @@ export async function renderGeschiedenis() {
 
     const badges = [];
     if (rec.mood != null) badges.push((MOODS.find((x) => x.v === rec.mood) || {}).e || '');
-    if (rec.morningScore != null) badges.push(`☀️ ${rec.morningScore}`);
-    if (rec.eveningScore != null) badges.push(`🌙 ${rec.eveningScore}`);
+    const dayScores = [rec.morningScore, rec.eveningScore].filter((v) => v != null);
+    if (dayScores.length) {
+      const avgScore = dayScores.reduce((a, b) => a + b, 0) / dayScores.length;
+      badges.push(`⭐ ${String(Math.round(avgScore * 10) / 10).replace('.', ',')}`);
+    }
     const pr = painRepresentative(rec);
     if (pr != null) badges.push(`🩹 ${String(Math.round(pr * 10) / 10).replace('.', ',')}`);
     if (rec.exerciseMinutes != null && rec.exerciseMinutes > 0) badges.push(`🏃 ${rec.exerciseMinutes}m`);
