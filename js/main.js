@@ -1,6 +1,6 @@
 // Instappunt (ES-module): koppelt alle feature-modules aan de DOM en start op.
 import {
-  LS, currentDate, loadCurrent, saveNow, switchTab, registerTabRenderers,
+  LS, currentDate, activeTab, loadCurrent, saveNow, switchTab, registerTabRenderers,
   openDate, backToToday, clearCurrentDay, advanceToTodayIfNeeded, confirmDialog,
   haptic, buildScoreRow,
 } from './core.js';
@@ -77,6 +77,26 @@ async function init() {
   for (const btn of document.querySelectorAll('.tabbtn')) {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   }
+
+  // Swipe links/rechts wisselt van tab
+  const TAB_ORDER = ['vandaag', 'pijn', 'geschiedenis', 'inzichten', 'meer'];
+  let swipeStartX = null;
+  let swipeStartY = null;
+  document.addEventListener('touchstart', (e) => {
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (swipeStartX === null) return;
+    const dx = e.changedTouches[0].clientX - swipeStartX;
+    const dy = e.changedTouches[0].clientY - swipeStartY;
+    swipeStartX = null;
+    swipeStartY = null;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const idx = TAB_ORDER.indexOf(activeTab);
+    if (dx < 0 && idx < TAB_ORDER.length - 1) switchTab(TAB_ORDER[idx + 1]);
+    else if (dx > 0 && idx > 0) switchTab(TAB_ORDER[idx - 1]);
+  }, { passive: true });
 
   // header krijgt schaduw zodra de pagina gescrolld is
   const headerEl = document.querySelector('.app-header');
