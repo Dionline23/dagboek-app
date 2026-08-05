@@ -15,6 +15,24 @@ function addDays(dateStr, n) {
   return toISODate(new Date(y, m - 1, d + n));
 }
 
+function isDueOnDate(habit, dateStr) {
+  if (!habit.startDate) return true;
+  const [sy, sm, sd] = habit.startDate.split('-').map(Number);
+  const [dy, dm, dd] = dateStr.split('-').map(Number);
+  const daysSince = Math.round(
+    (new Date(dy, dm - 1, dd) - new Date(sy, sm - 1, sd)) / 86400000
+  );
+  if (daysSince < 0) return false;
+  switch (habit.freq) {
+    case 'daily':     return true;
+    case 'other_day': return daysSince % 2 === 0;
+    case '3pw':       return [0, 2, 4].includes(daysSince % 7);
+    case '2pw':       return [0, 3].includes(daysSince % 7);
+    case '1pw':       return daysSince % 7 === 0;
+    default:          return true;
+  }
+}
+
 function monthsAgo(y, m, d, n) {
   const targetMonth = m - 1 - n;
   const lastDay = new Date(y, targetMonth + 1, 0).getDate();
@@ -272,4 +290,5 @@ export {
   painRepresentative, hasContent, extractTags, normalizeDay, computeRegionStats,
   mondayOf, bucketsFor, topEmotions,
   importNum, importStr, importBoolMap, sanitizeDay,
+  isDueOnDate,
 };

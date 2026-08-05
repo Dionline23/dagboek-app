@@ -6,7 +6,7 @@ import {
 } from './core.js';
 import {
   todayStr, addDays, monthsAgo, toISODate, relativeDayLabel, formatDate,
-  hasContent, extractTags,
+  hasContent, extractTags, isDueOnDate,
 } from './logic.js';
 import { dbGetDay, dbGetAllDays } from './db.js';
 import { confettiBurst } from './effects.js';
@@ -525,11 +525,14 @@ function getHabits() {
 function saveHabits(arr) { localStorage.setItem(LS.habits, JSON.stringify(arr)); }
 
 function renderHabits() {
-  const habits = getHabits();
+  const allHabits = getHabits();
+  const habits = allHabits.filter((h) => isDueOnDate(h, currentDate));
   const wrap = document.getElementById('habits-list');
   wrap.innerHTML = '';
   if (!habits.length) {
-    wrap.innerHTML = '<p class="hint" style="margin:0">Nog geen gewoontes. Voeg ze toe bij ⚙️ Meer → Gewoontes.</p>';
+    wrap.innerHTML = allHabits.length
+      ? '<p class="hint" style="margin:0">Geen gewoontes gepland voor vandaag.</p>'
+      : '<p class="hint" style="margin:0">Nog geen gewoontes. Voeg ze toe bij ⚙️ Meer → Gewoontes.</p>';
     return;
   }
   if (!currentRecord.habits) currentRecord.habits = {};
@@ -573,6 +576,16 @@ function renderHabitsManager() {
       const found = arr.find((x) => x.id === h.id);
       if (found) { found.freq = freqSel.value; saveHabits(arr); }
     });
+    const datePicker = document.createElement('input');
+    datePicker.type = 'date';
+    datePicker.className = 'manage-start';
+    datePicker.setAttribute('aria-label', 'Startdatum');
+    datePicker.value = h.startDate || '';
+    datePicker.addEventListener('change', () => {
+      const arr = getHabits();
+      const found = arr.find((x) => x.id === h.id);
+      if (found) { found.startDate = datePicker.value || null; saveHabits(arr); }
+    });
     const del = document.createElement('button');
     del.type = 'button';
     del.className = 'manage-del';
@@ -590,6 +603,7 @@ function renderHabitsManager() {
     });
     row.appendChild(name);
     row.appendChild(freqSel);
+    row.appendChild(datePicker);
     row.appendChild(del);
     wrap.appendChild(row);
   }
@@ -597,15 +611,19 @@ function renderHabitsManager() {
 
 export function initHabitsManager() {
   renderHabitsManager();
+  const startInput = document.getElementById('habit-new-start');
+  startInput.value = todayStr();
   const addHabit = () => {
     const input = document.getElementById('habit-new');
     const name = input.value.trim();
     if (!name) return;
     const freq = document.getElementById('habit-new-freq').value || 'daily';
+    const startDate = startInput.value || todayStr();
     const habits = getHabits();
-    habits.push({ id: 'h' + Date.now(), name, freq });
+    habits.push({ id: 'h' + Date.now(), name, freq, startDate });
     saveHabits(habits);
     input.value = '';
+    startInput.value = todayStr();
     renderHabitsManager();
     showToast('Gewoonte toegevoegd');
   };

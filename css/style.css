@@ -945,6 +945,29 @@ button.tag-chip.clickable { cursor: pointer; }
   color: var(--text);
   cursor: pointer;
 }
+.manage-start {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  color-scheme: light dark;
+}
+.habit-date-input {
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  color-scheme: light dark;
+}
 .manage-del {
   border: none;
   background: none;
