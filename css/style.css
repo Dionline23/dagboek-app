@@ -201,6 +201,21 @@ button:focus:not(:focus-visible) { outline: none; }
 .tab:not(.hidden) > *:nth-child(6) { animation-delay: 0.15s; }
 .tab:not(.hidden) > *:nth-child(n+7) { animation-delay: 0.18s; }
 
+/* Swipe-navigatie: actieve tab volgt de vinger, veert terug of schuift door */
+.tab.swiping { will-change: transform; }
+.tab.swipe-settle { transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1); }
+
+@keyframes swipeInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes swipeInLeft  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+.tab.swipe-in-right { animation: swipeInRight 0.26s cubic-bezier(0.22, 1, 0.36, 1); }
+.tab.swipe-in-left  { animation: swipeInLeft  0.26s cubic-bezier(0.22, 1, 0.36, 1); }
+/* de kaart-stagger vecht met de slide: bij een swipe schuift het blok als geheel */
+.tab.swipe-in-right > *,
+.tab.swipe-in-left > * { animation: none !important; }
+
+/* horizontaal doorschieten naar browser-navigatie voorkomen */
+body { overscroll-behavior-x: contain; }
+
 /* Respecteer systeemvoorkeur 'minder beweging' */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -236,6 +251,9 @@ main {
   padding: var(--sp-4) var(--sp-4) calc(84px + env(safe-area-inset-bottom));
   max-width: 560px;
   margin: 0 auto;
+  /* clip i.p.v. hidden: knipt de wegschuivende tab af zonder een
+     scroll-container te maken (die zou sticky/scrollY beïnvloeden) */
+  overflow-x: clip;
 }
 
 .hidden { display: none !important; }

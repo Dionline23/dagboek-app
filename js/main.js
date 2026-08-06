@@ -78,25 +78,7 @@ async function init() {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   }
 
-  // Swipe links/rechts wisselt van tab
-  const TAB_ORDER = ['vandaag', 'pijn', 'geschiedenis', 'inzichten', 'meer'];
-  let swipeStartX = null;
-  let swipeStartY = null;
-  document.addEventListener('touchstart', (e) => {
-    swipeStartX = e.touches[0].clientX;
-    swipeStartY = e.touches[0].clientY;
-  }, { passive: true });
-  document.addEventListener('touchend', (e) => {
-    if (swipeStartX === null) return;
-    const dx = e.changedTouches[0].clientX - swipeStartX;
-    const dy = e.changedTouches[0].clientY - swipeStartY;
-    swipeStartX = null;
-    swipeStartY = null;
-    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    const idx = TAB_ORDER.indexOf(activeTab);
-    if (dx < 0 && idx < TAB_ORDER.length - 1) switchTab(TAB_ORDER[idx + 1]);
-    else if (dx > 0 && idx > 0) switchTab(TAB_ORDER[idx - 1]);
-  }, { passive: true });
+  initSwipeNav();
 
   // header krijgt schaduw zodra de pagina gescrolld is
   const headerEl = document.querySelector('.app-header');
@@ -206,6 +188,87 @@ async function init() {
       location.reload();
     });
   }
+}
+
+// ---- Swipe-navigatie tussen tabs ----
+// De actieve tab volgt de vinger; bij loslaten schuift hij door naar de
+// volgende tab of veert terug. Richting wordt één keer vergrendeld zodat
+// verticaal scrollen nooit per ongeluk een tabwissel wordt.
+function initSwipeNav() {
+  const TAB_ORDER = ['vandaag', 'pijn', 'geschiedenis', 'inzichten', 'meer'];
+  // plekken waar een sleep iets anders betekent (tekenen, typen, kiezen)
+  const NO_SWIPE = 'input, textarea, select, svg, canvas';
+
+  let startX = 0, startY = 0, startT = 0, idx = 0;
+  let panel = null;    // de tab die meebeweegt
+  let decided = false; // richting al vastgesteld?
+  let dragging = false;
+
+  const visibleTab = () => document.querySelector('.tab:not(.hidden)');
+  const overlayOpen = () =>
+    !document.getElementById('dialog').classList.contains('hidden') ||
+    !document.getElementById('onboarding').classList.contains('hidden');
+
+  const reset = () => {
+    if (panel) { panel.classList.remove('swiping'); panel.style.transform = ''; }
+    panel = null; decided = false; dragging = false;
+  };
+
+  document.addEventListener('touchstart', (e) => {
+    reset();
+    if (e.touches.length !== 1 || overlayOpen()) return;
+    if (e.target.closest && e.target.closest(NO_SWIPE)) return;
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY; startT = Date.now();
+    idx = TAB_ORDER.indexOf(activeTab);
+    panel = visibleTab();
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!panel || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+
+    if (!decided) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; // nog te klein om te weten
+      decided = true;
+      dragging = Math.abs(dx) > Math.abs(dy) * 1.2;
+      if (!dragging) { panel = null; return; } // verticaal: laat scrollen met rust
+      panel.classList.add('swiping');
+    }
+    // aan de uiteinden voelbaar tegenwerken i.p.v. hard blokkeren
+    const atEdge = (dx > 0 && idx === 0) || (dx < 0 && idx === TAB_ORDER.length - 1);
+    panel.style.transform = `translateX(${atEdge ? dx * 0.25 : dx}px)`;
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    if (!panel || !dragging) { reset(); return; }
+    const dx = e.changedTouches[0].clientX - startX;
+    const speed = Math.abs(dx) / Math.max(Date.now() - startT, 1); // px/ms
+    const dir = dx < 0 ? 1 : -1;
+    const target = idx + dir;
+    const commit = (Math.abs(dx) > window.innerWidth * 0.22 || (speed > 0.35 && Math.abs(dx) > 45))
+      && target >= 0 && target < TAB_ORDER.length;
+
+    const old = panel;
+    old.classList.remove('swiping');
+    old.classList.add('swipe-settle');
+    old.style.transform = '';
+    setTimeout(() => old.classList.remove('swipe-settle'), 260);
+    panel = null; decided = false; dragging = false;
+
+    if (!commit) return;
+    switchTab(TAB_ORDER[target]);
+    const next = visibleTab();
+    if (next) {
+      const cls = dir === 1 ? 'swipe-in-right' : 'swipe-in-left';
+      next.classList.add(cls);
+      next.addEventListener('animationend', () => next.classList.remove(cls), { once: true });
+    }
+    haptic(8);
+  }, { passive: true });
+
+  document.addEventListener('touchcancel', reset, { passive: true });
 }
 
 init();
