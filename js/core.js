@@ -128,7 +128,7 @@ export function haptic(ms = 8) {
 }
 
 // ---- Score-knoppenrijen (gedeeld door Vandaag en Pijn) ----
-export function buildScoreRow(container, field) {
+export function buildScoreRow(container, field, onChange) {
   const min = Number(container.dataset.min);
   const max = Number(container.dataset.max);
   const noteField = field + 'Note';
@@ -143,6 +143,7 @@ export function buildScoreRow(container, field) {
     btn.addEventListener('click', () => {
       currentRecord[field] = currentRecord[field] === v ? null : v;
       updateScoreRow(container, currentRecord[field]);
+      if (onChange) onChange();
       saveNow();
     });
     container.appendChild(btn);

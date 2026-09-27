@@ -193,17 +193,41 @@ async function renderMissedPrompt() {
 // ---- "Klaar"-afvinkknoppen per onderdeel ----
 const TODAY_DONE_KEYS = ['morning', 'evening', 'gratitude', 'journal', 'exercise', 'pain'];
 
-function toggleDone(key) {
+// Zet één kaart op klaar of weer terug. Doet niets als de stand al klopt, zodat
+// de confetti niet opnieuw afgaat bij een herhaalde aanroep.
+function setDone(key, value) {
   if (!currentRecord.done) currentRecord.done = {};
+  if (!!currentRecord.done[key] === !!value) return;
   const before = TODAY_DONE_KEYS.filter((k) => currentRecord.done[k]).length;
-  currentRecord.done[key] = !currentRecord.done[key];
+  currentRecord.done[key] = !!value;
   const after = TODAY_DONE_KEYS.filter((k) => currentRecord.done[k]).length;
   renderDone();
-  saveNow();
   // 🎉 alles afgerond met deze tik → confetti (alleen bij echte voltooiing)
   if (after === TODAY_DONE_KEYS.length && before === TODAY_DONE_KEYS.length - 1) {
     confettiBurst();
   }
+}
+
+function toggleDone(key) {
+  if (!currentRecord.done) currentRecord.done = {};
+  setDone(key, !currentRecord.done[key]);
+  saveNow();
+}
+
+// Wanneer een kaart zichzelf mag afvinken op basis van de ingevulde cijfers.
+// Pijn vraagt alle drie de momenten; ochtend en avond hebben er maar één.
+const DONE_BY_SCORE = {
+  morning: (r) => r.morningScore != null,
+  evening: (r) => r.eveningScore != null,
+  pain: (r) => r.painMorning != null && r.painAfternoon != null && r.painEvening != null,
+};
+
+// Een ingevuld cijfer vinkt de kaart automatisch af. Wordt het cijfer weer
+// gewist, dan gaat het vinkje ook uit: een kaart zonder cijfer hoort niet als
+// afgerond mee te tellen in de ring en de streak.
+export function syncDone(key) {
+  const rule = DONE_BY_SCORE[key];
+  if (rule) setDone(key, rule(currentRecord));
 }
 
 export function renderDone() {

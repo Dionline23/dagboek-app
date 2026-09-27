@@ -9,6 +9,7 @@ import {
   buildMoodRow, buildEmotionChips, buildExercisePresets, buildGratitude,
   initGratitudeStepper, initWritingHelp, initHabitsManager, initJournalInput,
   initExerciseInput, initDoneButtons, initBigEvent, initDictation, renderVandaag,
+  syncDone,
 } from './today.js';
 import { initBodyMap, renderPijn } from './pain.js';
 import { renderGeschiedenis, setTagFilter, calPrevMonth, calNextMonth } from './history.js';
@@ -31,11 +32,13 @@ async function init() {
   });
 
   buildMoodRow();
-  buildScoreRow(document.getElementById('morning-scores'), 'morningScore');
-  buildScoreRow(document.getElementById('evening-scores'), 'eveningScore');
-  buildScoreRow(document.getElementById('pain-morning'), 'painMorning');
-  buildScoreRow(document.getElementById('pain-afternoon'), 'painAfternoon');
-  buildScoreRow(document.getElementById('pain-evening'), 'painEvening');
+  // een ingevuld cijfer vinkt de bijbehorende kaart zelf af
+  const syncPain = () => syncDone('pain');
+  buildScoreRow(document.getElementById('morning-scores'), 'morningScore', () => syncDone('morning'));
+  buildScoreRow(document.getElementById('evening-scores'), 'eveningScore', () => syncDone('evening'));
+  buildScoreRow(document.getElementById('pain-morning'), 'painMorning', syncPain);
+  buildScoreRow(document.getElementById('pain-afternoon'), 'painAfternoon', syncPain);
+  buildScoreRow(document.getElementById('pain-evening'), 'painEvening', syncPain);
   buildExercisePresets();
 
   initGratitudeStepper();
